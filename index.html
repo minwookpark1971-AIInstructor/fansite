@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity | Cha Eun-woo Fan Site</title>
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Stars Background -->
+    <div id="stars-container"></div>
+
+    <!-- Header -->
+    <header>
+        <div class="logo-container">
+            <img id="site-logo" src="" alt="Logo" style="max-height: 40px; max-width: 200px; display: none; cursor: pointer;" onclick="window.location.href='index.html'">
+        </div>
+        <div class="hamburger"><i class="fas fa-bars"></i></div>
+        <nav>
+            <ul>
+                <li><a href="#" data-target="home" class="active">Home</a></li>
+                <li><a href="#" data-target="videos">차은우 영상 보기</a></li>
+                <li><a href="#" data-target="music">차은우 음원 듣기</a></li>
+                <li><a href="#" data-target="community">응원 메시지</a></li>
+                <li id="nav-auth">
+                    <a href="#" data-target="login">로그인</a>
+                    <span style="margin: 0 5px; color: var(--text-muted);">|</span>
+                    <a href="#" data-target="signup">회원가입</a>
+                </li>
+                <li id="nav-user" style="display:none;">
+                    <a href="#" id="btn-logout">로그아웃</a>
+                    <span style="margin: 0 5px; color: var(--text-muted);">|</span>
+                    <a href="#" data-target="mypage">마이페이지</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Home Section -->
+        <section id="home" class="active">
+            <div class="hero-image-wrapper">
+                <img src="https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo" alt="Cha Eun-woo"
+                    class="hero-image" id="main-hero-img">
+            </div>
+            <h1 class="hero-title">CHA EUN-WOO</h1>
+            <p class="hero-subtitle">Welcome to Antigravity. Experience the universe of Cha Eun-woo.</p>
+        </section>
+
+        <!-- Videos Section -->
+        <section id="videos">
+            <h2><i class="fas fa-video"></i> 차은우 영상 보기</h2>
+            <br>
+            <div class="video-grid" id="video-list">
+                <!-- JS will render videos here -->
+            </div>
+        </section>
+
+        <!-- Music Section -->
+        <section id="music">
+            <h2><i class="fas fa-music"></i> 차은우 음원 듣기</h2>
+            <br>
+            <div class="glass-card">
+                <div class="music-list" id="music-list">
+                    <!-- JS will render music items here -->
+                </div>
+            </div>
+            <!-- Hidden Audio Element -->
+            <audio id="global-player" controls style="display:none;"></audio>
+        </section>
+
+        <!-- Community Section -->
+        <section id="community">
+            <h2><i class="fas fa-heart"></i> 응원 메시지</h2>
+            <br>
+            <div class="community-container">
+                <div id="write-area" class="glass-card write-post-box" style="display:none;">
+                    <h3>응원 메시지 작성</h3>
+                    <textarea id="post-content" rows="3" placeholder="차은우에게 응원 메시지를 남겨주세요..."></textarea>
+                    <button class="btn-primary" id="btn-post">작성하기</button>
+                </div>
+                <div id="login-prompt" class="glass-card" style="text-align:center;">
+                    <p>메시지를 작성하려면 <a href="#" onclick="navigateTo('login'); return false;"
+                            style="color:var(--accent-pink)">로그인</a>이 필요합니다.</p>
+                </div>
+
+                <div id="post-list">
+                    <!-- Posts go here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Login Section -->
+        <section id="login">
+            <div class="auth-container glass-card" id="login-form">
+                <h2>로그인</h2>
+                <input type="email" id="login-email" placeholder="이메일 주소">
+                <input type="password" id="login-password" placeholder="비밀번호">
+                <button class="btn-primary" id="btn-login">로그인</button>
+                <p class="auth-toggle" onclick="toggleAuth('signup')">계정이 없으신가요? 회원가입</p>
+            </div>
+        </section>
+
+        <!-- Signup Section -->
+        <section id="signup">
+            <div class="auth-container glass-card" id="signup-form">
+                <h2>회원가입</h2>
+                <input type="text" id="signup-nickname" placeholder="닉네임">
+                <input type="email" id="signup-email" placeholder="이메일 주소">
+                <input type="password" id="signup-password" placeholder="비밀번호">
+                <select id="signup-country">
+                    <option value="KR">대한민국</option>
+                    <option value="US">미국</option>
+                    <option value="JP">일본</option>
+                    <option value="CN">중국</option>
+                    <option value="Other">기타</option>
+                </select>
+                <button class="btn-primary" id="btn-signup">회원가입</button>
+                <p class="auth-toggle" onclick="toggleAuth('login')">이미 회원이신가요? 로그인</p>
+            </div>
+        </section>
+
+        <!-- My Page Section -->
+        <section id="mypage">
+            <div class="auth-container glass-card">
+                <h2>마이페이지</h2>
+                <div id="user-info" style="text-align: left; padding: 20px;">
+                    <p><strong>닉네임:</strong> <span id="user-nickname">-</span></p>
+                    <p><strong>이메일:</strong> <span id="user-email">-</span></p>
+                    <p><strong>국가:</strong> <span id="user-country">-</span></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="utils.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
