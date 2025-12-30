@@ -154,6 +154,109 @@
             </table>
         </div>
 
+        <!-- 쇼핑몰 상품 관리 -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-shopping-bag"></i> 쇼핑몰 상품 관리</h2>
+            <div class="admin-form">
+                <div class="admin-form-row">
+                    <input type="text" id="admin-product-name" placeholder="상품명" style="flex: 1;">
+                    <input type="number" id="admin-product-price" placeholder="가격 (원)" style="flex: 1;">
+                    <select id="admin-product-category" style="flex: 1;">
+                        <option value="포토카드">포토카드</option>
+                        <option value="의류">의류</option>
+                        <option value="음반">음반</option>
+                        <option value="액세서리">액세서리</option>
+                        <option value="포스터">포스터</option>
+                    </select>
+                </div>
+                <div class="admin-form-row">
+                    <input type="number" id="admin-product-stock" placeholder="재고 수량" style="flex: 1;">
+                    <input type="number" id="admin-product-rating" placeholder="평점 (0-5)" step="0.1" min="0" max="5" style="flex: 1;">
+                    <input type="number" id="admin-product-reviews" placeholder="리뷰 수" style="flex: 1;">
+                </div>
+                <textarea id="admin-product-description" placeholder="상품 설명" rows="3" style="width: 100%; margin-top: 10px;"></textarea>
+                <div style="margin-top: 15px;">
+                    <label style="display: block; margin-bottom: 10px;">상품 이미지:</label>
+                    <input type="file" id="admin-product-image" accept="image/jpeg,image/png,image/jpg" style="margin-bottom: 10px;">
+                    <div id="admin-product-image-preview" style="margin-top: 10px;"></div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn-primary" id="btn-add-product">상품 추가</button>
+                    <button class="btn-danger btn-small" id="btn-reset-product-form">폼 초기화</button>
+                </div>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>이미지</th>
+                        <th>상품명</th>
+                        <th>카테고리</th>
+                        <th>가격</th>
+                        <th>재고</th>
+                        <th>평점</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="product-table-body">
+                    <!-- Products will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 회원 관리 -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-users"></i> 회원 관리</h2>
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="admin-user-search" placeholder="이메일 또는 닉네임으로 검색..." 
+                       style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 10px; color: white;">
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>닉네임</th>
+                        <th>이메일</th>
+                        <th>국가</th>
+                        <th>가입일</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body">
+                    <!-- Users will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 결제 로그 관리 -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-receipt"></i> 결제 로그 관리</h2>
+            <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+                <input type="text" id="admin-order-search" placeholder="주문번호 또는 이메일로 검색..." 
+                       style="flex: 1; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 10px; color: white;">
+                <select id="admin-order-status-filter" style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 10px; color: white;">
+                    <option value="all">전체 상태</option>
+                    <option value="PAID">결제 완료</option>
+                    <option value="PENDING">결제 대기</option>
+                    <option value="CANCELLED">취소됨</option>
+                </select>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>주문번호</th>
+                        <th>구매자</th>
+                        <th>상품</th>
+                        <th>결제금액</th>
+                        <th>상태</th>
+                        <th>결제일</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="order-table-body">
+                    <!-- Orders will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+
         <!-- 응원 메시지 관리 -->
         <div class="admin-section glass-card">
             <h2><i class="fas fa-comments"></i> 응원 메시지 관리</h2>

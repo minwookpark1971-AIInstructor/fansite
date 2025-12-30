@@ -7,6 +7,9 @@ $(document).ready(() => {
     renderVideosTable();
     renderMusicTable();
     renderPostsTable();
+    renderProductsTable();
+    renderUsersTable();
+    renderOrdersTable();
 
     // Random Stars
     for (let i = 0; i < 50; i++) {
@@ -224,6 +227,99 @@ $(document).ready(() => {
         }
     });
 
+    // 상품 이미지 미리보기
+    $('#admin-product-image').change(function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#admin-product-image-preview').html(
+                    `<img src="${e.target.result}" class="image-preview" style="max-width: 200px; max-height: 200px;">`
+                );
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 상품 추가
+    $('#btn-add-product').click(() => {
+        const name = $('#admin-product-name').val().trim();
+        const price = parseInt($('#admin-product-price').val());
+        const category = $('#admin-product-category').val();
+        const stock = parseInt($('#admin-product-stock').val()) || 0;
+        const rating = parseFloat($('#admin-product-rating').val()) || null;
+        const reviews = parseInt($('#admin-product-reviews').val()) || 0;
+        const description = $('#admin-product-description').val().trim();
+        const fileInput = $('#admin-product-image')[0];
+        const file = fileInput.files[0];
+
+        if (!name) {
+            alert('상품명을 입력해주세요.');
+            return;
+        }
+
+        if (!price || price <= 0) {
+            alert('가격을 올바르게 입력해주세요.');
+            return;
+        }
+
+        if (!description) {
+            alert('상품 설명을 입력해주세요.');
+            return;
+        }
+
+        // 이미지 처리
+        const processImage = (imageData) => {
+            const products = store.get('products', []);
+            const newId = Date.now().toString();
+            
+            products.push({
+                id: newId,
+                name: name,
+                description: description,
+                price: price,
+                image: imageData || 'https://via.placeholder.com/400x400/302b63/ffffff?text=No+Image',
+                category: category,
+                stock: stock,
+                rating: rating,
+                reviews: reviews
+            });
+            
+            store.set('products', products);
+            renderProductsTable();
+            resetProductForm();
+            alert('상품이 추가되었습니다!');
+        };
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                processImage(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            processImage(null);
+        }
+    });
+
+    // 상품 폼 초기화
+    $('#btn-reset-product-form').click(() => {
+        resetProductForm();
+    });
+
+    // 회원 검색
+    $('#admin-user-search').on('input', function() {
+        renderUsersTable();
+    });
+
+    // 결제 로그 검색 및 필터
+    $('#admin-order-search').on('input', function() {
+        renderOrdersTable();
+    });
+    $('#admin-order-status-filter').change(function() {
+        renderOrdersTable();
+    });
+
     // 모든 변경사항 저장 및 반영 버튼
     $('#btn-save-all').click(() => {
         // 모든 데이터가 이미 localStorage에 저장되어 있으므로, 메인 페이지로 이동하여 확인
@@ -234,6 +330,19 @@ $(document).ready(() => {
         }
     });
 });
+
+// 상품 폼 초기화 함수
+function resetProductForm() {
+    $('#admin-product-name').val('');
+    $('#admin-product-price').val('');
+    $('#admin-product-category').val('포토카드');
+    $('#admin-product-stock').val('');
+    $('#admin-product-rating').val('');
+    $('#admin-product-reviews').val('');
+    $('#admin-product-description').val('');
+    $('#admin-product-image').val('');
+    $('#admin-product-image-preview').html('');
+}
 
 // 현재 이미지 로드
 function loadCurrentImage() {
@@ -399,6 +508,330 @@ window.deletePost = function(index) {
         store.set('posts', posts);
         renderPostsTable();
         alert('응원 메시지가 삭제되었습니다!');
+    }
+};
+
+// 상품 테이블 렌더링
+function renderProductsTable() {
+    const products = store.get('products', []);
+    if (products.length === 0) {
+        $('#product-table-body').html('<tr><td colspan="7" style="text-align:center; color:#ccc;">등록된 상품이 없습니다.</td></tr>');
+        return;
+    }
+
+    const html = products.map((p, index) => `
+        <tr>
+            <td><img src="${p.image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;"></td>
+            <td>${p.name}</td>
+            <td>${p.category}</td>
+            <td>${p.price.toLocaleString()}원</td>
+            <td>${p.stock}개</td>
+            <td>${p.rating ? '★ ' + p.rating + ' (' + p.reviews + ')' : '-'}</td>
+            <td>
+                <button class="btn-primary btn-small" onclick="editProduct(${index})">수정</button>
+                <button class="btn-danger btn-small" onclick="deleteProduct(${index})">삭제</button>
+            </td>
+        </tr>
+    `).join('');
+    $('#product-table-body').html(html);
+}
+
+// 상품 수정
+window.editProduct = function(index) {
+    const products = store.get('products', []);
+    const product = products[index];
+    
+    // 폼에 데이터 채우기
+    $('#admin-product-name').val(product.name);
+    $('#admin-product-price').val(product.price);
+    $('#admin-product-category').val(product.category);
+    $('#admin-product-stock').val(product.stock);
+    $('#admin-product-rating').val(product.rating || '');
+    $('#admin-product-reviews').val(product.reviews || 0);
+    $('#admin-product-description').val(product.description);
+    $('#admin-product-image-preview').html(`<img src="${product.image}" class="image-preview" style="max-width: 200px; max-height: 200px;">`);
+    
+    // 상품 추가 버튼을 수정 버튼으로 변경
+    const addBtn = $('#btn-add-product');
+    const originalText = addBtn.text();
+    addBtn.text('상품 수정').off('click').on('click', function() {
+        const name = $('#admin-product-name').val().trim();
+        const price = parseInt($('#admin-product-price').val());
+        const category = $('#admin-product-category').val();
+        const stock = parseInt($('#admin-product-stock').val()) || 0;
+        const rating = parseFloat($('#admin-product-rating').val()) || null;
+        const reviews = parseInt($('#admin-product-reviews').val()) || 0;
+        const description = $('#admin-product-description').val().trim();
+        const fileInput = $('#admin-product-image')[0];
+        const file = fileInput.files[0];
+
+        if (!name || !price || !description) {
+            alert('필수 항목을 모두 입력해주세요.');
+            return;
+        }
+
+        const updateProduct = (imageData) => {
+            products[index] = {
+                ...products[index],
+                name: name,
+                description: description,
+                price: price,
+                image: imageData || products[index].image,
+                category: category,
+                stock: stock,
+                rating: rating,
+                reviews: reviews
+            };
+            
+            store.set('products', products);
+            renderProductsTable();
+            resetProductForm();
+            addBtn.text(originalText).off('click').on('click', arguments.callee);
+            alert('상품이 수정되었습니다!');
+        };
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                updateProduct(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            updateProduct(null);
+        }
+    });
+    
+    // 스크롤을 폼으로 이동
+    $('html, body').animate({
+        scrollTop: $('#admin-product-name').offset().top - 100
+    }, 500);
+};
+
+// 상품 삭제
+window.deleteProduct = function(index) {
+    if (confirm('이 상품을 삭제하시겠습니까?')) {
+        const products = store.get('products', []);
+        products.splice(index, 1);
+        store.set('products', products);
+        renderProductsTable();
+        alert('상품이 삭제되었습니다!');
+    }
+};
+
+// 회원 테이블 렌더링
+function renderUsersTable() {
+    const users = store.get('users', []);
+    const searchTerm = $('#admin-user-search').val().toLowerCase();
+    
+    let filteredUsers = users;
+    if (searchTerm) {
+        filteredUsers = users.filter(u => 
+            (u.email && u.email.toLowerCase().includes(searchTerm)) ||
+            (u.nickname && u.nickname.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    if (filteredUsers.length === 0) {
+        $('#user-table-body').html('<tr><td colspan="5" style="text-align:center; color:#ccc;">등록된 회원이 없습니다.</td></tr>');
+        return;
+    }
+
+    const html = filteredUsers.map((u, index) => {
+        const signupDate = u.signupDate ? new Date(u.signupDate).toLocaleDateString() : 'N/A';
+        const countryNames = {
+            'KR': '대한민국',
+            'US': '미국',
+            'JP': '일본',
+            'CN': '중국',
+            'Other': '기타'
+        };
+        return `
+        <tr>
+            <td>${u.nickname || '-'}</td>
+            <td>${u.email || '-'}</td>
+            <td>${countryNames[u.country] || u.country || '-'}</td>
+            <td>${signupDate}</td>
+            <td>
+                <button class="btn-danger btn-small" onclick="deleteUser(${index})">삭제</button>
+            </td>
+        </tr>
+        `;
+    }).join('');
+    $('#user-table-body').html(html);
+}
+
+// 회원 삭제
+window.deleteUser = function(index) {
+    if (confirm('이 회원을 삭제하시겠습니까? 회원의 모든 데이터가 삭제됩니다.')) {
+        const users = store.get('users', []);
+        const user = users[index];
+        
+        // 회원의 게시글도 삭제 (선택사항)
+        if (confirm('이 회원의 응원 메시지도 함께 삭제하시겠습니까?')) {
+            const posts = store.get('posts', []);
+            const filteredPosts = posts.filter(p => p.author !== user.nickname);
+            store.set('posts', filteredPosts);
+            renderPostsTable();
+        }
+        
+        users.splice(index, 1);
+        store.set('users', users);
+        renderUsersTable();
+        alert('회원이 삭제되었습니다!');
+    }
+};
+
+// 결제 로그 테이블 렌더링
+function renderOrdersTable() {
+    const orders = store.get('orders', []);
+    const searchTerm = $('#admin-order-search').val().toLowerCase();
+    const statusFilter = $('#admin-order-status-filter').val();
+    
+    let filteredOrders = orders;
+    
+    // 검색 필터
+    if (searchTerm) {
+        filteredOrders = filteredOrders.filter(o => 
+            (o.id && o.id.toLowerCase().includes(searchTerm)) ||
+            (o.impUid && o.impUid.toLowerCase().includes(searchTerm)) ||
+            (o.shippingInfo && o.shippingInfo.name && o.shippingInfo.name.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    // 상태 필터
+    if (statusFilter !== 'all') {
+        filteredOrders = filteredOrders.filter(o => o.status === statusFilter);
+    }
+    
+    // 최신순 정렬
+    filteredOrders.sort((a, b) => {
+        const dateA = new Date(a.paidAt || a.createdAt || 0);
+        const dateB = new Date(b.paidAt || b.createdAt || 0);
+        return dateB - dateA;
+    });
+    
+    if (filteredOrders.length === 0) {
+        $('#order-table-body').html('<tr><td colspan="7" style="text-align:center; color:#ccc;">결제 로그가 없습니다.</td></tr>');
+        return;
+    }
+
+    const html = filteredOrders.map((o, index) => {
+        const paidDate = o.paidAt ? new Date(o.paidAt).toLocaleString() : 'N/A';
+        const productNames = o.items ? o.items.map(item => item.name).join(', ') : '-';
+        const totalAmount = o.totalAmount || 0;
+        const shippingFee = o.shippingFee || 0;
+        const finalAmount = totalAmount + shippingFee;
+        const statusColors = {
+            'PAID': '#4CAF50',
+            'PENDING': '#FF9800',
+            'CANCELLED': '#F44336'
+        };
+        const statusTexts = {
+            'PAID': '결제 완료',
+            'PENDING': '결제 대기',
+            'CANCELLED': '취소됨'
+        };
+        
+        return `
+        <tr>
+            <td>${o.id || o.impUid || '-'}</td>
+            <td>${o.shippingInfo ? o.shippingInfo.name : '-'}</td>
+            <td>${productNames.length > 30 ? productNames.substring(0, 30) + '...' : productNames}</td>
+            <td>${finalAmount.toLocaleString()}원</td>
+            <td><span style="color: ${statusColors[o.status] || '#ccc'}; font-weight: 600;">${statusTexts[o.status] || o.status}</span></td>
+            <td>${paidDate}</td>
+            <td>
+                <button class="btn-primary btn-small" onclick="viewOrderDetail(${index})">상세</button>
+                ${o.status === 'PAID' ? `<button class="btn-danger btn-small" onclick="cancelOrder(${index})">취소</button>` : ''}
+            </td>
+        </tr>
+        `;
+    }).join('');
+    $('#order-table-body').html(html);
+}
+
+// 주문 상세 보기
+window.viewOrderDetail = function(index) {
+    const orders = store.get('orders', []);
+    const searchTerm = $('#admin-order-search').val().toLowerCase();
+    const statusFilter = $('#admin-order-status-filter').val();
+    
+    let filteredOrders = orders;
+    if (searchTerm) {
+        filteredOrders = orders.filter(o => 
+            (o.id && o.id.toLowerCase().includes(searchTerm)) ||
+            (o.impUid && o.impUid.toLowerCase().includes(searchTerm))
+        );
+    }
+    if (statusFilter !== 'all') {
+        filteredOrders = filteredOrders.filter(o => o.status === statusFilter);
+    }
+    
+    const order = filteredOrders[index];
+    if (!order) return;
+    
+    const itemsHtml = order.items ? order.items.map(item => 
+        `<li>${item.name} x ${item.quantity} = ${(item.price * item.quantity).toLocaleString()}원</li>`
+    ).join('') : '<li>상품 정보 없음</li>';
+    
+    const detailHtml = `
+        <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; margin-top: 10px;">
+            <h3 style="color: var(--accent-pink); margin-bottom: 15px;">주문 상세 정보</h3>
+            <p><strong>주문번호:</strong> ${order.id || order.impUid || '-'}</p>
+            <p><strong>결제번호:</strong> ${order.impUid || '-'}</p>
+            <p><strong>상태:</strong> ${order.status || '-'}</p>
+            <p><strong>상품 목록:</strong></p>
+            <ul style="margin-left: 20px;">${itemsHtml}</ul>
+            <p><strong>상품 금액:</strong> ${(order.totalAmount || 0).toLocaleString()}원</p>
+            <p><strong>배송비:</strong> ${(order.shippingFee || 0).toLocaleString()}원</p>
+            <p><strong>총 결제금액:</strong> ${((order.totalAmount || 0) + (order.shippingFee || 0)).toLocaleString()}원</p>
+            ${order.shippingInfo ? `
+                <p><strong>배송지 정보:</strong></p>
+                <ul style="margin-left: 20px;">
+                    <li>이름: ${order.shippingInfo.name || '-'}</li>
+                    <li>전화번호: ${order.shippingInfo.phone || '-'}</li>
+                    <li>우편번호: ${order.shippingInfo.postcode || '-'}</li>
+                    <li>주소: ${order.shippingInfo.addr || '-'}</li>
+                </ul>
+            ` : ''}
+            <p><strong>결제일:</strong> ${order.paidAt ? new Date(order.paidAt).toLocaleString() : '-'}</p>
+        </div>
+    `;
+    
+    alert(detailHtml.replace(/<[^>]*>/g, '\n').replace(/\n+/g, '\n'));
+};
+
+// 주문 취소
+window.cancelOrder = function(index) {
+    if (!confirm('이 주문을 취소하시겠습니까? 취소된 주문은 복구할 수 없습니다.')) {
+        return;
+    }
+    
+    const orders = store.get('orders', []);
+    const searchTerm = $('#admin-order-search').val().toLowerCase();
+    const statusFilter = $('#admin-order-status-filter').val();
+    
+    let filteredOrders = orders;
+    if (searchTerm) {
+        filteredOrders = orders.filter(o => 
+            (o.id && o.id.toLowerCase().includes(searchTerm)) ||
+            (o.impUid && o.impUid.toLowerCase().includes(searchTerm))
+        );
+    }
+    if (statusFilter !== 'all') {
+        filteredOrders = filteredOrders.filter(o => o.status === statusFilter);
+    }
+    
+    const order = filteredOrders[index];
+    if (!order) return;
+    
+    // 실제 orders 배열에서 찾기
+    const actualIndex = orders.findIndex(o => o.id === order.id || o.impUid === order.impUid);
+    if (actualIndex !== -1) {
+        orders[actualIndex].status = 'CANCELLED';
+        store.set('orders', orders);
+        renderOrdersTable();
+        alert('주문이 취소되었습니다!');
     }
 };
 

@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Portone SDK -->
+    <script type="text/javascript" src="https://cdn.iamport.kr/v1/iamport.js"></script>
     <!-- CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -28,6 +30,7 @@
                 <li><a href="#" data-target="home" class="active">Home</a></li>
                 <li><a href="#" data-target="videos">차은우 영상 보기</a></li>
                 <li><a href="#" data-target="music">차은우 음원 듣기</a></li>
+                <li><a href="#" data-target="shop">쇼핑몰</a></li>
                 <li><a href="#" data-target="community">응원 메시지</a></li>
                 <li id="nav-auth">
                     <a href="#" data-target="login">로그인</a>
@@ -35,6 +38,11 @@
                     <a href="#" data-target="signup">회원가입</a>
                 </li>
                 <li id="nav-user" style="display:none;">
+                    <a href="#" data-target="cart" id="nav-cart-link">
+                        <i class="fas fa-shopping-cart"></i> 장바구니 
+                        <span id="cart-count-badge" style="background: var(--accent-pink); padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; margin-left: 5px;">0</span>
+                    </a>
+                    <span style="margin: 0 5px; color: var(--text-muted);">|</span>
                     <a href="#" id="btn-logout">로그아웃</a>
                     <span style="margin: 0 5px; color: var(--text-muted);">|</span>
                     <a href="#" data-target="mypage">마이페이지</a>
@@ -75,6 +83,22 @@
             </div>
             <!-- Hidden Audio Element -->
             <audio id="global-player" controls style="display:none;"></audio>
+        </section>
+
+        <!-- Shop Section -->
+        <section id="shop">
+            <h2><i class="fas fa-shopping-bag"></i> 차은우 공식 굿즈</h2>
+            <br>
+            <div class="shop-container">
+                <!-- Category Filter -->
+                <div class="category-filter" id="category-filter">
+                    <!-- JS will render category buttons here -->
+                </div>
+                <!-- Product Grid -->
+                <div class="product-grid" id="product-grid">
+                    <!-- JS will render products here -->
+                </div>
+            </div>
         </section>
 
         <!-- Community Section -->
@@ -125,6 +149,85 @@
                 </select>
                 <button class="btn-primary" id="btn-signup">회원가입</button>
                 <p class="auth-toggle" onclick="toggleAuth('login')">이미 회원이신가요? 로그인</p>
+            </div>
+        </section>
+
+        <!-- Cart Section -->
+        <section id="cart">
+            <h2><i class="fas fa-shopping-cart"></i> 장바구니</h2>
+            <br>
+            <div class="cart-container">
+                <div id="cart-empty" class="glass-card" style="text-align: center; padding: 40px; display: none;">
+                    <i class="fas fa-shopping-cart" style="font-size: 4rem; color: var(--text-muted); margin-bottom: 20px;"></i>
+                    <p style="font-size: 1.2rem; margin-bottom: 20px;">장바구니가 비어있습니다</p>
+                    <button class="btn-primary" onclick="navigateTo('shop')">쇼핑하러 가기</button>
+                </div>
+                <div id="cart-content" style="display: none;">
+                    <div class="cart-header">
+                        <label class="cart-checkbox-label">
+                            <input type="checkbox" id="select-all-cart" onchange="toggleSelectAll()">
+                            <span>전체 선택</span>
+                        </label>
+                        <button class="btn-danger" onclick="removeSelectedItems()" style="font-size: 0.9rem;">선택 삭제</button>
+                    </div>
+                    <div id="cart-items-list">
+                        <!-- JS will render cart items here -->
+                    </div>
+                    <div class="cart-summary glass-card">
+                        <div class="summary-row">
+                            <span>상품 금액</span>
+                            <span id="cart-subtotal">0원</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>배송비</span>
+                            <span id="cart-shipping">0원</span>
+                        </div>
+                        <div class="summary-row total-row">
+                            <span>총 결제금액</span>
+                            <span id="cart-total">0원</span>
+                        </div>
+                        <button class="btn-primary" id="btn-checkout" onclick="handleCheckout()" style="width: 100%; margin-top: 20px; padding: 15px; font-size: 1.1rem;">
+                            결제하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Payment Section -->
+        <section id="payment">
+            <h2><i class="fas fa-credit-card"></i> 결제하기</h2>
+            <br>
+            <div class="payment-container">
+                <div class="glass-card" style="max-width: 600px; margin: 0 auto;">
+                    <h3 style="margin-bottom: 20px;">배송 정보</h3>
+                    <div class="payment-form">
+                        <input type="text" id="payment-name" placeholder="받는 분 이름" required>
+                        <input type="tel" id="payment-phone" placeholder="전화번호" required>
+                        <input type="text" id="payment-postcode" placeholder="우편번호" required>
+                        <textarea id="payment-addr" placeholder="주소" rows="3" required></textarea>
+                    </div>
+                    <div class="payment-summary" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+                        <div class="summary-row">
+                            <span>상품 금액</span>
+                            <span id="payment-subtotal">0원</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>배송비</span>
+                            <span id="payment-shipping">0원</span>
+                        </div>
+                        <div class="summary-row total-row">
+                            <span>총 결제금액</span>
+                            <span id="payment-total">0원</span>
+                        </div>
+                    </div>
+                    <div id="payment-button-container" style="margin-top: 30px;">
+                        <!-- 결제 버튼이 여기에 동적으로 생성됨 -->
+                    </div>
+                    <button class="btn-primary" onclick="navigateTo('cart')" style="width: 100%; margin-top: 15px; background: var(--glass-bg); border: 1px solid var(--glass-border);">
+                        장바구니로 돌아가기
+                    </button>
+                </div>
             </div>
         </section>
 

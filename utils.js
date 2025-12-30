@@ -74,6 +74,88 @@ function initData() {
     if (!store.get('users')) {
         store.set('users', []);
     }
+    
+    // Products (쇼핑몰 상품 데이터)
+    if (!store.get('products')) {
+        store.set('products', [
+            {
+                id: '1',
+                name: '차은우 포토카드 세트',
+                description: '차은우의 특별한 순간들을 담은 프리미엄 포토카드 세트입니다. 총 10장의 고품질 포토카드가 포함되어 있습니다.',
+                price: 25000,
+                image: 'https://via.placeholder.com/400x400/667eea/ffffff?text=Photo+Card+Set',
+                category: '포토카드',
+                stock: 50,
+                rating: 4.8,
+                reviews: 124
+            },
+            {
+                id: '2',
+                name: '차은우 공식 후드티',
+                description: '편안한 착용감의 프리미엄 후드티입니다. 차은우의 시그니처 로고가 새겨진 한정판 아이템입니다.',
+                price: 89000,
+                image: 'https://via.placeholder.com/400x400/764ba2/ffffff?text=Hoodie',
+                category: '의류',
+                stock: 30,
+                rating: 4.9,
+                reviews: 89
+            },
+            {
+                id: '3',
+                name: '차은우 앨범 - True Beauty',
+                description: '차은우의 첫 번째 솔로 앨범입니다. 수록곡 5곡이 포함되어 있으며, 특별 포토북이 함께 제공됩니다.',
+                price: 35000,
+                image: 'https://via.placeholder.com/400x400/f093fb/ffffff?text=Album',
+                category: '음반',
+                stock: 100,
+                rating: 5.0,
+                reviews: 256
+            },
+            {
+                id: '4',
+                name: '차은우 시그니처 머그컵',
+                description: '일상에서 차은우와 함께하세요. 고급 세라믹 소재로 제작된 프리미엄 머그컵입니다.',
+                price: 18000,
+                image: 'https://via.placeholder.com/400x400/4facfe/ffffff?text=Mug',
+                category: '액세서리',
+                stock: 75,
+                rating: 4.7,
+                reviews: 67
+            },
+            {
+                id: '5',
+                name: '차은우 포스터 세트',
+                description: '대형 포스터 3종 세트입니다. 벽면 장식용으로 최적화된 고해상도 프린트입니다.',
+                price: 22000,
+                image: 'https://via.placeholder.com/400x400/00f2fe/ffffff?text=Poster+Set',
+                category: '포스터',
+                stock: 40,
+                rating: 4.6,
+                reviews: 45
+            },
+            {
+                id: '6',
+                name: '차은우 공식 키링',
+                description: '가방이나 키에 매달 수 있는 프리미엄 키링입니다. 차은우의 시그니처 디자인이 적용되었습니다.',
+                price: 12000,
+                image: 'https://via.placeholder.com/400x400/43e97b/ffffff?text=Keyring',
+                category: '액세서리',
+                stock: 120,
+                rating: 4.5,
+                reviews: 98
+            }
+        ]);
+    }
+    
+    // Cart (장바구니)
+    if (!store.get('cart')) {
+        store.set('cart', []);
+    }
+    
+    // Orders (주문/결제 로그)
+    if (!store.get('orders')) {
+        store.set('orders', []);
+    }
 }
 
 // 배경 이미지 관리
