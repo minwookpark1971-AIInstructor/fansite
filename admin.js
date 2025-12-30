@@ -134,7 +134,7 @@ $(document).ready(() => {
     });
 
     // 음원 추가
-    $('#btn-add-music').click(() => {
+    $('#btn-add-music').click(async () => {
         const title = $('#admin-music-title').val().trim();
         const fileInput = $('#admin-music-file')[0];
         const file = fileInput.files[0];
@@ -154,9 +154,9 @@ $(document).ready(() => {
             return;
         }
 
-        // 파일 크기 제한 (10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            alert('파일 크기는 10MB 이하여야 합니다.');
+        // 파일 크기 제한 (50MB - IndexedDB는 더 큰 용량 지원)
+        if (file.size > 50 * 1024 * 1024) {
+            alert('파일 크기는 50MB 이하여야 합니다.');
             return;
         }
 
@@ -165,44 +165,63 @@ $(document).ready(() => {
         const originalText = btn.html();
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> 업로드 중...');
 
-        // FileReader를 사용하여 base64로 변환하여 저장 (Blob URL은 세션 종료 시 무효화됨)
-        const reader = new FileReader();
-        reader.onload = function(e) {
+        try {
+            // FileReader를 사용하여 base64로 변환
+            const audioData = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('파일 읽기 실패'));
+                reader.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percentLoaded = Math.round((e.loaded / e.total) * 100);
+                        btn.html(`<i class="fas fa-spinner fa-spin"></i> 업로드 중... ${percentLoaded}%`);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // IndexedDB에 저장
+            const musicId = Date.now();
+            await audioDB.save(musicId, audioData, {
+                title: title,
+                filename: file.name,
+                type: file.type,
+                size: file.size
+            });
+
+            // 메타데이터만 localStorage에 저장 (용량 절약)
+            const music = store.get('music', []);
+            music.unshift({ 
+                id: musicId, 
+                title: title, 
+                url: 'indexeddb://' + musicId, // IndexedDB 참조 표시
+                filename: file.name,
+                type: file.type,
+                storedIn: 'indexeddb' // 저장 위치 표시
+            });
+            
+            // localStorage에 메타데이터만 저장 (용량 절약)
             try {
-                const audioData = e.target.result; // base64 데이터
-                const music = store.get('music', []);
-                music.unshift({ 
-                    id: Date.now(), 
-                    title: title, 
-                    url: audioData, // base64 데이터로 저장
-                    filename: file.name,
-                    type: file.type
-                });
                 store.set('music', music);
-                
-                $('#admin-music-title').val('');
-                fileInput.value = '';
-                renderMusicTable();
-                alert('음원이 추가되었습니다!');
-            } catch (error) {
-                console.error('음원 저장 오류:', error);
-                alert('음원 저장 중 오류가 발생했습니다: ' + error.message);
-            } finally {
-                btn.prop('disabled', false).html(originalText);
+            } catch (storageError) {
+                // localStorage가 가득 찬 경우, 오래된 항목 제거 시도
+                if (storageError.name === 'QuotaExceededError') {
+                    alert('저장 공간이 부족합니다. 일부 오래된 데이터를 삭제해주세요.');
+                    throw storageError;
+                }
+                throw storageError;
             }
-        };
-        reader.onerror = function(error) {
-            console.error('파일 읽기 오류:', error);
-            alert('파일 읽기에 실패했습니다. 파일이 손상되었거나 지원하지 않는 형식일 수 있습니다.');
+            
+            $('#admin-music-title').val('');
+            fileInput.value = '';
+            renderMusicTable();
+            alert('음원이 추가되었습니다!');
+        } catch (error) {
+            console.error('음원 저장 오류:', error);
+            alert('음원 저장 중 오류가 발생했습니다: ' + (error.message || error));
+        } finally {
             btn.prop('disabled', false).html(originalText);
-        };
-        reader.onprogress = function(e) {
-            if (e.lengthComputable) {
-                const percentLoaded = Math.round((e.loaded / e.total) * 100);
-                btn.html(`<i class="fas fa-spinner fa-spin"></i> 업로드 중... ${percentLoaded}%`);
-            }
-        };
-        reader.readAsDataURL(file);
+        }
     });
 
     // 모든 변경사항 저장 및 반영 버튼
@@ -329,20 +348,32 @@ window.editVideo = function(index) {
 };
 
 // 음원 삭제
-window.deleteMusic = function(index) {
+window.deleteMusic = async function(index) {
     if (confirm('이 음원을 삭제하시겠습니까?')) {
         const music = store.get('music', []);
         const musicItem = music[index];
         
-        // Blob URL 해제 (base64로 저장된 경우는 불필요)
-        if (musicItem.url && musicItem.url.startsWith('blob:')) {
-            URL.revokeObjectURL(musicItem.url);
+        try {
+            // IndexedDB에서 삭제
+            if (musicItem.storedIn === 'indexeddb' || musicItem.url?.startsWith('indexeddb://')) {
+                const musicId = musicItem.id;
+                await audioDB.delete(musicId);
+            }
+            
+            // Blob URL 해제 (기존 방식 지원)
+            if (musicItem.url && musicItem.url.startsWith('blob:')) {
+                URL.revokeObjectURL(musicItem.url);
+            }
+            
+            // localStorage에서 메타데이터 삭제
+            music.splice(index, 1);
+            store.set('music', music);
+            renderMusicTable();
+            alert('음원이 삭제되었습니다!');
+        } catch (error) {
+            console.error('음원 삭제 오류:', error);
+            alert('음원 삭제 중 오류가 발생했습니다: ' + (error.message || error));
         }
-        
-        music.splice(index, 1);
-        store.set('music', music);
-        renderMusicTable();
-        alert('음원이 삭제되었습니다!');
     }
 };
 

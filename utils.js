@@ -89,3 +89,105 @@ const backgroundImage = {
     }
 };
 
+// IndexedDB를 사용한 음원 파일 저장 (큰 파일용)
+const audioDB = {
+    dbName: 'AntigravityAudioDB',
+    storeName: 'audioFiles',
+    version: 1,
+    
+    // DB 초기화
+    init: function() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.version);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(this.storeName)) {
+                    db.createObjectStore(this.storeName, { keyPath: 'id' });
+                }
+            };
+        });
+    },
+    
+    // 음원 저장
+    save: async function(id, audioData, metadata) {
+        try {
+            const db = await this.init();
+            const transaction = db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            
+            const audioFile = {
+                id: id,
+                data: audioData,
+                ...metadata
+            };
+            
+            return new Promise((resolve, reject) => {
+                const request = store.put(audioFile);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error('AudioDB save error:', error);
+            throw error;
+        }
+    },
+    
+    // 음원 가져오기
+    get: async function(id) {
+        try {
+            const db = await this.init();
+            const transaction = db.transaction([this.storeName], 'readonly');
+            const store = transaction.objectStore(this.storeName);
+            
+            return new Promise((resolve, reject) => {
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error('AudioDB get error:', error);
+            throw error;
+        }
+    },
+    
+    // 음원 삭제
+    delete: async function(id) {
+        try {
+            const db = await this.init();
+            const transaction = db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            
+            return new Promise((resolve, reject) => {
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error('AudioDB delete error:', error);
+            throw error;
+        }
+    },
+    
+    // 모든 음원 ID 목록 가져오기
+    getAllIds: async function() {
+        try {
+            const db = await this.init();
+            const transaction = db.transaction([this.storeName], 'readonly');
+            const store = transaction.objectStore(this.storeName);
+            
+            return new Promise((resolve, reject) => {
+                const request = store.getAllKeys();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error('AudioDB getAllIds error:', error);
+            throw error;
+        }
+    }
+};
+

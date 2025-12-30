@@ -67,20 +67,46 @@ function renderMusic() {
 }
 
 // 인덱스로 음원 재생 (URL 이스케이프 문제 해결)
-window.playMusicByIndex = function(index) {
+window.playMusicByIndex = async function(index) {
     const music = store.get('music', []);
     if (index >= 0 && index < music.length) {
         const musicItem = music[index];
-        if (!musicItem || !musicItem.url) {
+        if (!musicItem) {
             alert('음원 데이터를 불러올 수 없습니다.');
             return;
         }
+        
         const btn = $(`.music-item[data-music-id="${musicItem.id || index}"] button`)[0];
-        if (btn) {
-            playMusic(musicItem.url, btn);
-        } else {
+        if (!btn) {
             alert('플레이어를 찾을 수 없습니다.');
+            return;
         }
+        
+        // IndexedDB에서 음원 데이터 가져오기
+        let audioUrl = musicItem.url;
+        if (musicItem.storedIn === 'indexeddb' || musicItem.url?.startsWith('indexeddb://')) {
+            try {
+                const musicId = musicItem.id;
+                const audioData = await audioDB.get(musicId);
+                if (audioData && audioData.data) {
+                    audioUrl = audioData.data; // base64 데이터
+                } else {
+                    alert('음원 파일을 찾을 수 없습니다.');
+                    return;
+                }
+            } catch (error) {
+                console.error('음원 로드 오류:', error);
+                alert('음원 파일을 불러오는 중 오류가 발생했습니다.');
+                return;
+            }
+        }
+        
+        if (!audioUrl || audioUrl === '#') {
+            alert('음원 URL이 없습니다.');
+            return;
+        }
+        
+        playMusic(audioUrl, btn);
     } else {
         alert('유효하지 않은 음원 인덱스입니다.');
     }
@@ -139,7 +165,7 @@ function renderPosts() {
 }
 
 // Feature Logic
-window.playMusic = function (url, btn) {
+window.playMusic = async function (url, btn) {
     const audio = document.getElementById('global-player');
     if (!audio) {
         alert('오디오 플레이어를 찾을 수 없습니다.');
@@ -177,10 +203,18 @@ window.playMusic = function (url, btn) {
         return;
     }
 
-    // base64 데이터 또는 blob URL 모두 처리
+    // base64 데이터, blob URL, 또는 IndexedDB 참조 모두 처리
     try {
+        let finalUrl = url;
+        
+        // IndexedDB 참조인 경우 (이미 playMusicByIndex에서 처리되어야 하지만 안전장치)
+        if (url.startsWith('indexeddb://')) {
+            alert('음원을 불러오는 중입니다. 잠시만 기다려주세요.');
+            return;
+        }
+        
         // 오디오 소스 설정
-        audio.src = url;
+        audio.src = finalUrl;
         
         // 로딩 표시
         icon.removeClass('fa-play fa-pause').addClass('fa-spinner fa-spin');
@@ -188,6 +222,11 @@ window.playMusic = function (url, btn) {
         // 오디오 로드 이벤트
         audio.onloadeddata = function() {
             icon.removeClass('fa-spinner fa-spin').addClass('fa-play');
+        };
+        
+        audio.onerror = function() {
+            icon.removeClass('fa-spinner fa-spin').addClass('fa-play');
+            alert('오디오 파일을 로드할 수 없습니다. 파일이 손상되었거나 지원하지 않는 형식일 수 있습니다.');
         };
 
         // 재생 시도
