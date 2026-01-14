@@ -987,26 +987,7 @@ $(document).ready(() => {
         const password = $('#signup-password').val();
         const country = $('#signup-country').val();
         
-        if (!nickname || !email || !password) {
-            alert('모든 필드를 입력해주세요.');
-            return;
-        }
-        
-        const users = store.get('users', []);
-        if (users.find(u => u.email === email)) {
-            alert('이미 등록된 이메일입니다.');
-            return;
-        }
-        
-        users.push({
-            nickname: nickname,
-            email: email,
-            password: password,
-            country: country,
-            signupDate: new Date().toISOString()
-        });
-        store.set('users', users);
-        
+
         if (!nickname || !email || !password) {
             alert('모든 필드를 입력해주세요.');
             return;
