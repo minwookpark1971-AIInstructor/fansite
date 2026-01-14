@@ -419,7 +419,7 @@ function initProductManagement() {
                 $('#modal-product-image-preview').html(
                     `<div style="position: relative; display: inline-block;">
                         <img src="${e.target.result}" class="image-preview" style="max-width: 300px; max-height: 300px; border-radius: 10px; border: 2px solid var(--glass-border);">
-                        <button type="button" onclick="$('#modal-product-image').val(''); $('#modal-product-image-preview').html('');" style="position: absolute; top: 5px; right: 5px; background: rgba(255, 77, 87, 0.9); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">
+                        <button type="button" onclick="$('#modal-product-image').val(''); $('#modal-product-image-preview').html(''); $('#image-upload-area').show();" style="position: absolute; top: 5px; right: 5px; background: rgba(255, 77, 87, 0.9); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>`
