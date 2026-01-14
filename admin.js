@@ -2,14 +2,41 @@
 
 // 초기화
 $(document).ready(() => {
-    initData();
-    loadCurrentImage();
-    renderVideosTable();
-    renderMusicTable();
-    renderPostsTable();
-    renderProductsTable();
-    renderUsersTable();
-    renderOrdersTable();
+    console.log('관리자 페이지 초기화 시작');
+    
+    // 데이터 초기화
+    try {
+        initData();
+        console.log('데이터 초기화 완료');
+    } catch (error) {
+        console.error('데이터 초기화 오류:', error);
+    }
+    
+    // 각 섹션 렌더링
+    try {
+        loadCurrentImage();
+        console.log('이미지 로드 완료');
+    } catch (error) {
+        console.error('이미지 로드 오류:', error);
+    }
+    
+    try {
+        renderVideosTable();
+        console.log('영상 테이블 렌더링 완료');
+    } catch (error) {
+        console.error('영상 테이블 렌더링 오류:', error);
+    }
+    
+    try {
+        renderMusicTable();
+        renderPostsTable();
+        renderProductsTable();
+        renderUsersTable();
+        renderOrdersTable();
+        console.log('모든 테이블 렌더링 완료');
+    } catch (error) {
+        console.error('테이블 렌더링 오류:', error);
+    }
 
     // Random Stars
     for (let i = 0; i < 50; i++) {
@@ -64,9 +91,24 @@ $(document).ready(() => {
 
     // 로고 로드
     function loadCurrentLogo() {
-        const logoData = store.get('site_logo');
-        if (logoData) {
-            $('#current-logo-preview').attr('src', logoData);
+        try {
+            const logoData = store.get('site_logo');
+            const $preview = $('#current-logo-preview');
+            
+            if (logoData && typeof logoData === 'string' && (logoData.startsWith('data:') || logoData.startsWith('http://') || logoData.startsWith('https://'))) {
+                $preview.attr('src', logoData);
+            } else {
+                $preview.attr('src', 'https://via.placeholder.com/200/302b63/ffffff?text=No+Logo');
+            }
+            
+            // 이미지 로드 실패 시 fallback
+            $preview.on('error', function() {
+                $(this).off('error');
+                $(this).attr('src', 'https://via.placeholder.com/200/302b63/ffffff?text=No+Logo');
+            });
+        } catch (error) {
+            console.error('loadCurrentLogo error:', error);
+            $('#current-logo-preview').attr('src', 'https://via.placeholder.com/200/302b63/ffffff?text=No+Logo');
         }
     }
     loadCurrentLogo();
@@ -85,15 +127,45 @@ $(document).ready(() => {
             return;
         }
 
+        // 파일 크기 제한 (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('이미지 파일 크기는 5MB 이하여야 합니다.');
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
-            const imageData = e.target.result;
-            backgroundImage.set(imageData);
-            $('#current-image-preview').attr('src', imageData);
-            alert('이미지가 업로드되었습니다!');
-            fileInput.value = '';
+            try {
+                const imageData = e.target.result;
+                console.log('이미지 데이터 로드 완료, 크기:', imageData.length);
+                
+                // 이미지 저장
+                backgroundImage.set(imageData);
+                console.log('이미지 저장 완료');
+                
+                // 미리보기 업데이트
+                const $preview = $('#current-image-preview');
+                $preview.attr('src', imageData);
+                
+                // 이미지 로드 확인
+                $preview.on('load', function() {
+                    console.log('이미지 미리보기 로드 성공');
+                });
+                
+                $preview.on('error', function() {
+                    console.error('이미지 미리보기 로드 실패');
+                    alert('이미지 미리보기를 표시할 수 없습니다. 저장은 완료되었습니다.');
+                });
+                
+                alert('이미지가 업로드되었습니다!');
+                fileInput.value = '';
+            } catch (error) {
+                console.error('이미지 업로드 오류:', error);
+                alert('이미지 업로드 중 오류가 발생했습니다: ' + (error.message || error));
+            }
         };
-        reader.onerror = function() {
+        reader.onerror = function(error) {
+            console.error('파일 읽기 오류:', error);
             alert('파일 읽기에 실패했습니다.');
         };
         reader.readAsDataURL(file);
@@ -110,30 +182,58 @@ $(document).ready(() => {
 
     // 영상 추가
     $('#btn-add-video').click(() => {
-        const videoId = $('#admin-video-id').val().trim();
-        const videoTitle = $('#admin-video-title').val().trim();
+        try {
+            const videoId = $('#admin-video-id').val().trim();
+            const videoTitle = $('#admin-video-title').val().trim();
 
-        if (!videoId) {
-            alert('YouTube ID를 입력해주세요.');
-            return;
+            if (!videoId) {
+                alert('YouTube ID를 입력해주세요.');
+                return;
+            }
+
+            if (!videoTitle) {
+                alert('영상 제목을 입력해주세요.');
+                return;
+            }
+
+            // YouTube ID 유효성 검사 (11자리 영숫자와 하이픈, 언더스코어만 허용)
+            if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+                alert('올바른 YouTube ID 형식이 아닙니다. (11자리 영숫자)');
+                return;
+            }
+
+            const videos = store.get('videos', []);
+            
+            // videos가 배열이 아닌 경우 초기화
+            if (!Array.isArray(videos)) {
+                console.warn('videos가 배열이 아닙니다. 초기화합니다.');
+                store.set('videos', []);
+            }
+            
+            const currentVideos = Array.isArray(videos) ? videos : [];
+            
+            // 중복 체크
+            if (currentVideos.some(v => v && v.id === videoId)) {
+                alert('이미 등록된 YouTube ID입니다.');
+                return;
+            }
+            
+            currentVideos.unshift({ 
+                id: videoId, 
+                title: videoTitle 
+            });
+            
+            store.set('videos', currentVideos);
+            console.log('영상 추가 완료:', { id: videoId, title: videoTitle });
+            
+            $('#admin-video-id').val('');
+            $('#admin-video-title').val('');
+            renderVideosTable();
+            alert('영상이 추가되었습니다!');
+        } catch (error) {
+            console.error('영상 추가 오류:', error);
+            alert('영상 추가 중 오류가 발생했습니다: ' + (error.message || error));
         }
-
-        if (!videoTitle) {
-            alert('영상 제목을 입력해주세요.');
-            return;
-        }
-
-        const videos = store.get('videos', []);
-        videos.unshift({ 
-            id: videoId, 
-            title: videoTitle 
-        });
-        store.set('videos', videos);
-        
-        $('#admin-video-id').val('');
-        $('#admin-video-title').val('');
-        renderVideosTable();
-        alert('영상이 추가되었습니다!');
     });
 
     // 음원 추가
@@ -346,26 +446,72 @@ function resetProductForm() {
 
 // 현재 이미지 로드
 function loadCurrentImage() {
-    const imgData = backgroundImage.get();
-    if (imgData) {
-        $('#current-image-preview').attr('src', imgData);
+    try {
+        const imgData = backgroundImage.get();
+        const $preview = $('#current-image-preview');
+        
+        if (imgData) {
+            // base64 데이터나 URL인지 확인
+            if (typeof imgData === 'string' && (imgData.startsWith('data:') || imgData.startsWith('http://') || imgData.startsWith('https://'))) {
+                $preview.attr('src', imgData);
+                console.log('관리자 페이지: 메인 이미지 로드됨');
+            } else {
+                // 유효하지 않은 형식이면 기본 placeholder 사용
+                $preview.attr('src', 'https://via.placeholder.com/300/302b63/ffffff?text=No+Image');
+                console.warn('관리자 페이지: 유효하지 않은 이미지 형식');
+            }
+        } else {
+            // 저장된 이미지가 없으면 기본 placeholder 사용
+            $preview.attr('src', 'https://via.placeholder.com/300/302b63/ffffff?text=No+Image');
+            console.log('관리자 페이지: 저장된 메인 이미지가 없습니다');
+        }
+        
+        // 이미지 로드 실패 시 fallback
+        $preview.on('error', function() {
+            console.error('관리자 페이지: 이미지 로드 실패, 기본 이미지로 대체');
+            $(this).off('error'); // 무한 루프 방지
+            $(this).attr('src', 'https://via.placeholder.com/300/302b63/ffffff?text=No+Image');
+        });
+    } catch (error) {
+        console.error('loadCurrentImage error:', error);
+        $('#current-image-preview').attr('src', 'https://via.placeholder.com/300/302b63/ffffff?text=No+Image');
     }
 }
 
 // 영상 테이블 렌더링
 function renderVideosTable() {
-    const videos = store.get('videos', []);
-    if (videos.length === 0) {
-        $('#video-table-body').html('<tr><td colspan="4" style="text-align:center; color:#ccc;">등록된 영상이 없습니다.</td></tr>');
-        return;
-    }
+    try {
+        const videos = store.get('videos', []);
+        
+        // videos가 배열이 아닌 경우 처리
+        if (!Array.isArray(videos)) {
+            console.error('videos가 배열이 아닙니다:', videos);
+            $('#video-table-body').html('<tr><td colspan="4" style="text-align:center; color:#ff6b6b;">데이터 형식 오류가 발생했습니다. 페이지를 새로고침해주세요.</td></tr>');
+            return;
+        }
+        
+        if (videos.length === 0) {
+            $('#video-table-body').html('<tr><td colspan="4" style="text-align:center; color:#ccc;">등록된 영상이 없습니다.</td></tr>');
+            return;
+        }
 
-    const html = videos.map((v, index) => `
+        const html = videos.map((v, index) => {
+            // 데이터 유효성 검사
+            if (!v || !v.id || !v.title) {
+                console.warn('유효하지 않은 영상 데이터:', v);
+                return '';
+            }
+            
+            // XSS 방지를 위한 이스케이프 처리
+            const title = String(v.title).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const videoId = String(v.id).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            return `
         <tr>
-            <td>${v.title}</td>
-            <td>${v.id}</td>
+            <td>${title}</td>
+            <td>${videoId}</td>
             <td>
-                <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" style="color: var(--accent-blue);">
+                <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" style="color: var(--accent-blue);">
                     <i class="fas fa-external-link-alt"></i> 보기
                 </a>
             </td>
@@ -374,8 +520,14 @@ function renderVideosTable() {
                 <button class="btn-primary btn-small" onclick="editVideo(${index})">수정</button>
             </td>
         </tr>
-    `).join('');
-    $('#video-table-body').html(html);
+    `;
+        }).filter(html => html !== '').join('');
+        
+        $('#video-table-body').html(html || '<tr><td colspan="4" style="text-align:center; color:#ccc;">등록된 영상이 없습니다.</td></tr>');
+    } catch (error) {
+        console.error('renderVideosTable error:', error);
+        $('#video-table-body').html('<tr><td colspan="4" style="text-align:center; color:#ff6b6b;">영상 목록을 불러오는 중 오류가 발생했습니다. 페이지를 새로고침해주세요.</td></tr>');
+    }
 }
 
 // 음원 테이블 렌더링

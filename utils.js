@@ -1,10 +1,40 @@
 // 공통 유틸리티 함수
 const store = {
     get: (key, def) => {
-        const val = localStorage.getItem(key);
-        return val ? JSON.parse(val) : def;
+        try {
+            const val = localStorage.getItem(key);
+            if (val === null || val === undefined) {
+                return def;
+            }
+            // JSON 파싱 시도
+            try {
+                return JSON.parse(val);
+            } catch (e) {
+                // JSON 파싱 실패 시 원본 문자열 반환 (base64 이미지 등)
+                return val;
+            }
+        } catch (error) {
+            console.error('store.get error:', error, 'key:', key);
+            return def;
+        }
     },
-    set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
+    set: (key, val) => {
+        try {
+            // 문자열인 경우 (base64 이미지 등) 직접 저장, 그 외는 JSON.stringify
+            if (typeof val === 'string' && (val.startsWith('data:') || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('blob:'))) {
+                localStorage.setItem(key, val);
+            } else {
+                localStorage.setItem(key, JSON.stringify(val));
+            }
+        } catch (error) {
+            console.error('store.set error:', error, 'key:', key);
+            // QuotaExceededError 처리
+            if (error.name === 'QuotaExceededError') {
+                alert('저장 공간이 부족합니다. 일부 데이터를 삭제해주세요.');
+            }
+            throw error;
+        }
+    },
     remove: (key) => localStorage.removeItem(key)
 };
 
@@ -161,13 +191,36 @@ function initData() {
 // 배경 이미지 관리
 const backgroundImage = {
     get: () => {
-        return store.get('main_image', null);
+        try {
+            const imgData = store.get('main_image', null);
+            // 문자열인 경우 그대로 반환, 객체인 경우 처리
+            if (typeof imgData === 'string') {
+                return imgData;
+            }
+            return imgData;
+        } catch (error) {
+            console.error('backgroundImage.get error:', error);
+            return null;
+        }
     },
     set: (imageData) => {
-        store.set('main_image', imageData);
+        try {
+            if (!imageData) {
+                console.warn('backgroundImage.set: imageData가 없습니다');
+                return;
+            }
+            store.set('main_image', imageData);
+        } catch (error) {
+            console.error('backgroundImage.set error:', error);
+            throw error;
+        }
     },
     remove: () => {
-        store.remove('main_image');
+        try {
+            store.remove('main_image');
+        } catch (error) {
+            console.error('backgroundImage.remove error:', error);
+        }
     }
 };
 
