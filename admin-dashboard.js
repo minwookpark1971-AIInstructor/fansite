@@ -220,6 +220,38 @@ function renderDashboard() {
         return signupDate.getTime() === today.getTime();
     });
     
+    // 이번 달 신규 회원 증가수
+    const thisMonth = new Date();
+    thisMonth.setDate(1);
+    thisMonth.setHours(0, 0, 0, 0);
+    const thisMonthMembers = users.filter(u => {
+        const signupDate = new Date(u.signupDate || 0);
+        return signupDate >= thisMonth;
+    });
+    
+    // 누적 방문자수 (localStorage에서 가져오거나 기본값)
+    let totalVisitors = parseInt(localStorage.getItem('totalVisitors') || '0');
+    if (!totalVisitors) {
+        totalVisitors = users.length * 10; // 기본값: 회원수 * 10
+        localStorage.setItem('totalVisitors', totalVisitors.toString());
+    }
+    
+    // 유튜브 플레이수 (localStorage에서 가져오거나 기본값)
+    let youtubePlays = parseInt(localStorage.getItem('youtubePlays') || '0');
+    if (!youtubePlays) {
+        const videos = store.get('videos', []);
+        youtubePlays = videos.length * 100; // 기본값: 영상수 * 100
+        localStorage.setItem('youtubePlays', youtubePlays.toString());
+    }
+    
+    // 음원 다운로드수 (localStorage에서 가져오거나 기본값)
+    let musicDownloads = parseInt(localStorage.getItem('musicDownloads') || '0');
+    if (!musicDownloads) {
+        const music = store.get('music', []);
+        musicDownloads = music.length * 50; // 기본값: 음원수 * 50
+        localStorage.setItem('musicDownloads', musicDownloads.toString());
+    }
+    
     // 대시보드 카드 업데이트
     $('#dashboard-today-orders').text(todayOrders.length);
     $('#dashboard-today-revenue').text(todayRevenue.toLocaleString() + '원');
@@ -227,17 +259,17 @@ function renderDashboard() {
     $('#dashboard-low-stock').text(lowStockProducts.length);
     $('#dashboard-new-members').text(todayMembers.length);
     
+    // 새로운 통계 카드 업데이트
+    $('#dashboard-total-visitors').text(totalVisitors.toLocaleString());
+    $('#dashboard-new-members-growth').text(thisMonthMembers.length);
+    $('#dashboard-youtube-plays').text(youtubePlays.toLocaleString());
+    $('#dashboard-music-downloads').text(musicDownloads.toLocaleString());
+    
     // 최근 주문 목록
     renderRecentOrders(orders.slice(0, 5));
     
     // 재고 부족 상품 목록
     renderLowStockProducts(lowStockProducts.slice(0, 5));
-    
-    // 매출 차트
-    renderRevenueChart();
-    
-    // 카테고리 차트
-    renderCategoryChart();
 }
 
 // 최근 주문 렌더링
@@ -295,120 +327,14 @@ function renderLowStockProducts(products) {
     $('#dashboard-low-stock-products').html(html || '<tr><td colspan="4" style="text-align:center; color:#ccc;">재고 부족 상품이 없습니다.</td></tr>');
 }
 
-// 매출 차트 렌더링
+// 매출 차트 렌더링 (삭제됨 - 더 이상 사용하지 않음)
 function renderRevenueChart() {
-    const orders = store.get('orders', []);
-    const last7Days = [];
-    const today = new Date();
-    
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
-        
-        const dayOrders = orders.filter(o => {
-            const orderDate = new Date(o.paidAt || o.createdAt || 0);
-            orderDate.setHours(0, 0, 0, 0);
-            return orderDate.getTime() === date.getTime() && o.status === 'PAID';
-        });
-        
-        const revenue = dayOrders.reduce((sum, o) => sum + (o.totalAmount || 0) + (o.shippingFee || 0), 0);
-        
-        last7Days.push({
-            date: date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
-            revenue: revenue
-        });
-    }
-    
-    const ctx = document.getElementById('revenue-chart');
-    if (!ctx) return;
-    
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: last7Days.map(d => d.date),
-            datasets: [{
-                label: '매출액 (원)',
-                data: last7Days.map(d => d.revenue),
-                borderColor: 'rgb(255, 154, 158)',
-                backgroundColor: 'rgba(255, 154, 158, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: { color: '#fff' }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { color: '#fff' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                },
-                x: {
-                    ticks: { color: '#fff' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                }
-            }
-        }
-    });
+    // 매출 차트는 삭제되었습니다.
 }
 
-// 카테고리 차트 렌더링
+// 카테고리 차트 렌더링 (삭제됨 - 더 이상 사용하지 않음)
 function renderCategoryChart() {
-    const orders = store.get('orders', []);
-    const products = store.get('products', []);
-    const categoryRevenue = {};
-    
-    orders.filter(o => o.status === 'PAID').forEach(order => {
-        if (order.items) {
-            order.items.forEach(item => {
-                const product = products.find(p => p.id === item.id);
-                if (product && product.category) {
-                    const revenue = (item.price || 0) * (item.quantity || 0);
-                    categoryRevenue[product.category] = (categoryRevenue[product.category] || 0) + revenue;
-                }
-            });
-        }
-    });
-    
-    const ctx = document.getElementById('category-chart');
-    if (!ctx) return;
-    
-    const categories = Object.keys(categoryRevenue);
-    const revenues = Object.values(categoryRevenue);
-    
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: categories,
-            datasets: [{
-                data: revenues,
-                backgroundColor: [
-                    'rgba(255, 154, 158, 0.8)',
-                    'rgba(161, 140, 209, 0.8)',
-                    'rgba(102, 126, 234, 0.8)',
-                    'rgba(240, 147, 251, 0.8)',
-                    'rgba(0, 242, 254, 0.8)'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#fff' }
-                }
-            }
-        }
-    });
+    // 카테고리 차트는 삭제되었습니다.
 }
 
 // 상품 관리 초기화
@@ -481,13 +407,57 @@ function initProductManagement() {
     $('#modal-product-image').change(function() {
         const file = this.files[0];
         if (file) {
+            // 파일 크기 체크
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('error', '오류', '이미지 파일 크기는 5MB 이하여야 합니다.');
+                $(this).val('');
+                return;
+            }
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 $('#modal-product-image-preview').html(
-                    `<img src="${e.target.result}" class="image-preview" style="max-width: 200px; max-height: 200px;">`
+                    `<div style="position: relative; display: inline-block;">
+                        <img src="${e.target.result}" class="image-preview" style="max-width: 300px; max-height: 300px; border-radius: 10px; border: 2px solid var(--glass-border);">
+                        <button type="button" onclick="$('#modal-product-image').val(''); $('#modal-product-image-preview').html('');" style="position: absolute; top: 5px; right: 5px; background: rgba(255, 77, 87, 0.9); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>`
                 );
+                $('#image-upload-area').hide();
             };
             reader.readAsDataURL(file);
+        }
+    });
+    
+    // 이미지 업로드 영역 드래그 앤 드롭
+    const imageUploadArea = $('#image-upload-area');
+    imageUploadArea.on('dragover', function(e) {
+        e.preventDefault();
+        $(this).css('border-color', 'var(--accent-pink)');
+        $(this).css('background', 'rgba(255, 154, 158, 0.1)');
+    });
+    
+    imageUploadArea.on('dragleave', function(e) {
+        e.preventDefault();
+        $(this).css('border-color', 'var(--glass-border)');
+        $(this).css('background', 'transparent');
+    });
+    
+    imageUploadArea.on('drop', function(e) {
+        e.preventDefault();
+        $(this).css('border-color', 'var(--glass-border)');
+        $(this).css('background', 'transparent');
+        
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.type.match('image.*')) {
+                $('#modal-product-image')[0].files = files;
+                $('#modal-product-image').trigger('change');
+            } else {
+                showToast('error', '오류', '이미지 파일만 업로드 가능합니다.');
+            }
         }
     });
     
@@ -510,6 +480,7 @@ function resetProductModal() {
     $('#modal-product-image-preview').html('');
     $('#modal-product-status').prop('checked', true);
     $('#modal-product-status-text').text('판매중');
+    $('#image-upload-area').show();
     
     // 카테고리 옵션 업데이트
     const categories = ['포토카드', '의류', '음반', '액세서리', '포스터'];
@@ -599,21 +570,38 @@ window.editProduct = function(productId) {
         return;
     }
     
+    // 먼저 카테고리 옵션 업데이트
+    const categories = ['포토카드', '의류', '음반', '액세서리', '포스터'];
+    const html = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    $('#modal-product-category').html('<option value="">카테고리 선택</option>' + html);
+    
     $('#product-modal-title').text('상품 수정').data('editing-id', productId);
     $('#modal-product-name').val(product.name || '');
     $('#modal-product-description').val(product.description || '');
     $('#modal-product-price').val(product.price || '');
-    $('#modal-product-category').val(product.category || '');
     $('#modal-product-stock').val(product.stock || 0);
     $('#modal-product-rating').val(product.rating || '');
     $('#modal-product-reviews').val(product.reviews || 0);
     $('#modal-product-status').prop('checked', product.stock > 0);
     $('#modal-product-status-text').text(product.stock > 0 ? '판매중' : '품절');
     
+    // 카테고리 옵션이 업데이트된 후에 값 설정
+    setTimeout(() => {
+        $('#modal-product-category').val(product.category || '');
+    }, 10);
+    
     if (product.image) {
         $('#modal-product-image-preview').html(
-            `<img src="${product.image}" class="image-preview" style="max-width: 200px; max-height: 200px;">`
+            `<div style="position: relative; display: inline-block;">
+                <img src="${product.image}" class="image-preview" style="max-width: 300px; max-height: 300px; border-radius: 10px; border: 2px solid var(--glass-border);">
+                <button type="button" onclick="$('#modal-product-image').val(''); $('#modal-product-image-preview').html(''); $('#image-upload-area').show();" style="position: absolute; top: 5px; right: 5px; background: rgba(255, 77, 87, 0.9); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`
         );
+        $('#image-upload-area').hide();
+    } else {
+        $('#image-upload-area').show();
     }
     
     openModal('product-modal');
