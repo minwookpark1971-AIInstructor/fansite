@@ -14,10 +14,10 @@ $(document).ready(() => {
     
     // 각 섹션 렌더링
     try {
-        loadCurrentImage();
-        console.log('이미지 로드 완료');
+        renderBannerImagesList();
+        console.log('배너 이미지 목록 로드 완료');
     } catch (error) {
-        console.error('이미지 로드 오류:', error);
+        console.error('배너 이미지 목록 로드 오류:', error);
     }
     
     try {
@@ -113,7 +113,7 @@ $(document).ready(() => {
     }
     loadCurrentLogo();
 
-    // 메인 이미지 업로드
+    // 메인 배너 이미지 추가 (슬라이더용)
     $('#btn-upload-image').click(() => {
         const fileInput = $('#admin-img-input')[0];
         const file = fileInput.files[0];
@@ -133,35 +133,35 @@ $(document).ready(() => {
             return;
         }
 
+        // 최대 개수 제한 (10개)
+        const currentImages = bannerImages.get();
+        if (currentImages.length >= 10) {
+            alert('최대 10개까지 등록할 수 있습니다. 기존 이미지를 삭제한 후 다시 시도해주세요.');
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
                 const imageData = e.target.result;
                 console.log('이미지 데이터 로드 완료, 크기:', imageData.length);
                 
-                // 이미지 저장
-                backgroundImage.set(imageData);
-                console.log('이미지 저장 완료');
+                // 이미지 배열에 추가
+                bannerImages.add(imageData);
+                console.log('이미지 추가 완료');
                 
-                // 미리보기 업데이트
-                const $preview = $('#current-image-preview');
-                $preview.attr('src', imageData);
+                // 목록 새로고침
+                renderBannerImagesList();
                 
-                // 이미지 로드 확인
-                $preview.on('load', function() {
-                    console.log('이미지 미리보기 로드 성공');
-                });
-                
-                $preview.on('error', function() {
-                    console.error('이미지 미리보기 로드 실패');
-                    alert('이미지 미리보기를 표시할 수 없습니다. 저장은 완료되었습니다.');
-                });
-                
-                alert('이미지가 업로드되었습니다!');
+                alert('이미지가 추가되었습니다! (총 ' + bannerImages.get().length + '개)');
                 fileInput.value = '';
             } catch (error) {
                 console.error('이미지 업로드 오류:', error);
-                alert('이미지 업로드 중 오류가 발생했습니다: ' + (error.message || error));
+                if (error.name === 'QuotaExceededError') {
+                    alert('저장 공간이 부족합니다. 일부 이미지를 삭제한 후 다시 시도해주세요.');
+                } else {
+                    alert('이미지 업로드 중 오류가 발생했습니다: ' + (error.message || error));
+                }
             }
         };
         reader.onerror = function(error) {
@@ -171,12 +171,23 @@ $(document).ready(() => {
         reader.readAsDataURL(file);
     });
 
-    // 메인 이미지 삭제
-    $('#btn-remove-image').click(() => {
-        if (confirm('메인 이미지를 삭제하시겠습니까?')) {
-            backgroundImage.remove();
-            $('#current-image-preview').attr('src', 'https://via.placeholder.com/300/302b63/ffffff?text=No+Image');
-            alert('이미지가 삭제되었습니다!');
+    // 전체 이미지 삭제
+    $('#btn-clear-all-images').click(() => {
+        const images = bannerImages.get();
+        if (images.length === 0) {
+            alert('삭제할 이미지가 없습니다.');
+            return;
+        }
+        
+        if (confirm(`등록된 모든 이미지(${images.length}개)를 삭제하시겠습니까?`)) {
+            try {
+                bannerImages.set([]);
+                renderBannerImagesList();
+                alert('모든 이미지가 삭제되었습니다!');
+            } catch (error) {
+                console.error('이미지 삭제 오류:', error);
+                alert('이미지 삭제 중 오류가 발생했습니다.');
+            }
         }
     });
 
@@ -444,38 +455,106 @@ function resetProductForm() {
     $('#admin-product-image-preview').html('');
 }
 
-// 현재 이미지 로드
-function loadCurrentImage() {
+// 배너 이미지 목록 렌더링
+function renderBannerImagesList() {
     try {
-        const imgData = backgroundImage.get();
-        const $preview = $('#current-image-preview');
+        const images = bannerImages.get();
+        const $list = $('#banner-images-list');
         
-        if (imgData) {
-            // base64 데이터나 URL인지 확인
-            if (typeof imgData === 'string' && (imgData.startsWith('data:') || imgData.startsWith('http://') || imgData.startsWith('https://'))) {
-                $preview.attr('src', imgData);
-                console.log('관리자 페이지: 메인 이미지 로드됨');
-            } else {
-                // 유효하지 않은 형식이면 기본 placeholder 사용
-                $preview.attr('src', 'https://via.placeholder.com/300/302b63/ffffff?text=No+Image');
-                console.warn('관리자 페이지: 유효하지 않은 이미지 형식');
-            }
-        } else {
-            // 저장된 이미지가 없으면 기본 placeholder 사용
-            $preview.attr('src', 'https://via.placeholder.com/300/302b63/ffffff?text=No+Image');
-            console.log('관리자 페이지: 저장된 메인 이미지가 없습니다');
+        if (!Array.isArray(images) || images.length === 0) {
+            $list.html(`
+                <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <i class="fas fa-images" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                    <p>등록된 이미지가 없습니다.</p>
+                    <p style="font-size: 0.9rem; margin-top: 10px;">위에서 이미지를 추가해주세요.</p>
+                </div>
+            `);
+            return;
         }
         
-        // 이미지 로드 실패 시 fallback
-        $preview.on('error', function() {
-            console.error('관리자 페이지: 이미지 로드 실패, 기본 이미지로 대체');
-            $(this).off('error'); // 무한 루프 방지
-            $(this).attr('src', 'https://via.placeholder.com/300/302b63/ffffff?text=No+Image');
-        });
+        const html = `
+            <div style="margin-bottom: 15px;">
+                <strong style="color: var(--accent-pink);">등록된 이미지: ${images.length}개</strong>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+                ${images.map((img, index) => `
+                    <div class="banner-image-item" style="position: relative; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; border: 2px solid var(--glass-border);">
+                        <div style="position: relative; padding-top: 100%; overflow: hidden; border-radius: 8px; margin-bottom: 10px;">
+                            <img src="${img}" alt="Banner ${index + 1}" 
+                                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
+                                 onerror="this.onerror=null; this.src='https://via.placeholder.com/200/302b63/ffffff?text=Error';">
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">이미지 #${index + 1}</div>
+                            <div style="display: flex; gap: 5px; justify-content: center;">
+                                <button class="btn-danger btn-small" onclick="deleteBannerImage(${index})" style="font-size: 0.8rem; padding: 5px 10px;">
+                                    <i class="fas fa-trash"></i> 삭제
+                                </button>
+                                ${index > 0 ? `
+                                    <button class="btn-primary btn-small" onclick="moveBannerImage(${index}, -1)" style="font-size: 0.8rem; padding: 5px 10px;">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </button>
+                                ` : ''}
+                                ${index < images.length - 1 ? `
+                                    <button class="btn-primary btn-small" onclick="moveBannerImage(${index}, 1)" style="font-size: 0.8rem; padding: 5px 10px;">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        $list.html(html);
+        console.log('배너 이미지 목록 렌더링 완료:', images.length + '개');
     } catch (error) {
-        console.error('loadCurrentImage error:', error);
-        $('#current-image-preview').attr('src', 'https://via.placeholder.com/300/302b63/ffffff?text=No+Image');
+        console.error('renderBannerImagesList error:', error);
+        $('#banner-images-list').html('<p style="color: #ff6b6b;">이미지 목록을 불러오는 중 오류가 발생했습니다.</p>');
     }
+}
+
+// 배너 이미지 삭제
+window.deleteBannerImage = function(index) {
+    if (confirm(`이미지 #${index + 1}을(를) 삭제하시겠습니까?`)) {
+        try {
+            bannerImages.remove(index);
+            renderBannerImagesList();
+            alert('이미지가 삭제되었습니다!');
+        } catch (error) {
+            console.error('이미지 삭제 오류:', error);
+            alert('이미지 삭제 중 오류가 발생했습니다.');
+        }
+    }
+};
+
+// 배너 이미지 순서 변경
+window.moveBannerImage = function(index, direction) {
+    try {
+        const images = bannerImages.get();
+        if (!Array.isArray(images) || index < 0 || index >= images.length) {
+            return;
+        }
+        
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= images.length) {
+            return;
+        }
+        
+        // 배열 요소 교환
+        [images[index], images[newIndex]] = [images[newIndex], images[index]];
+        bannerImages.set(images);
+        renderBannerImagesList();
+    } catch (error) {
+        console.error('이미지 순서 변경 오류:', error);
+        alert('이미지 순서 변경 중 오류가 발생했습니다.');
+    }
+};
+
+// 현재 이미지 로드 (하위 호환성)
+function loadCurrentImage() {
+    renderBannerImagesList();
 }
 
 // 영상 테이블 렌더링

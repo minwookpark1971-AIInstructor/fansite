@@ -188,7 +188,7 @@ function initData() {
     }
 }
 
-// 배경 이미지 관리
+// 배경 이미지 관리 (단일 이미지 - 하위 호환성 유지)
 const backgroundImage = {
     get: () => {
         try {
@@ -220,6 +220,77 @@ const backgroundImage = {
             store.remove('main_image');
         } catch (error) {
             console.error('backgroundImage.remove error:', error);
+        }
+    }
+};
+
+// 배너 이미지 배열 관리 (슬라이더용)
+const bannerImages = {
+    get: () => {
+        try {
+            const images = store.get('main_images', []);
+            // 배열이 아니거나 비어있으면 기본 이미지 반환
+            if (!Array.isArray(images) || images.length === 0) {
+                return [
+                    'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo+1',
+                    'https://via.placeholder.com/1080/667eea/ffffff?text=Cha+Eun-woo+2',
+                    'https://via.placeholder.com/1080/f093fb/ffffff?text=Cha+Eun-woo+3'
+                ];
+            }
+            return images;
+        } catch (error) {
+            console.error('bannerImages.get error:', error);
+            return [];
+        }
+    },
+    set: (images) => {
+        try {
+            if (!Array.isArray(images)) {
+                console.warn('bannerImages.set: images가 배열이 아닙니다');
+                return;
+            }
+            store.set('main_images', images);
+        } catch (error) {
+            console.error('bannerImages.set error:', error);
+            throw error;
+        }
+    },
+    add: (imageData) => {
+        try {
+            const images = bannerImages.get();
+            if (!Array.isArray(images)) {
+                bannerImages.set([imageData]);
+            } else {
+                images.push(imageData);
+                bannerImages.set(images);
+            }
+        } catch (error) {
+            console.error('bannerImages.add error:', error);
+            throw error;
+        }
+    },
+    remove: (index) => {
+        try {
+            const images = bannerImages.get();
+            if (Array.isArray(images) && index >= 0 && index < images.length) {
+                images.splice(index, 1);
+                bannerImages.set(images);
+            }
+        } catch (error) {
+            console.error('bannerImages.remove error:', error);
+            throw error;
+        }
+    },
+    update: (index, imageData) => {
+        try {
+            const images = bannerImages.get();
+            if (Array.isArray(images) && index >= 0 && index < images.length) {
+                images[index] = imageData;
+                bannerImages.set(images);
+            }
+        } catch (error) {
+            console.error('bannerImages.update error:', error);
+            throw error;
         }
     }
 };

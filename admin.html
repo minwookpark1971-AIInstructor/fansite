@@ -86,21 +86,22 @@
             </div>
         </div>
 
-        <!-- 메인 이미지 관리 -->
+        <!-- 메인 배너 이미지 관리 (슬라이더용) -->
         <div class="admin-section glass-card">
-            <h2><i class="fas fa-image"></i> 메인 이미지 관리</h2>
+            <h2><i class="fas fa-images"></i> 메인 배너 이미지 관리 (슬라이더)</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">
+                최대 10개까지 이미지를 등록할 수 있습니다. 등록된 이미지가 자동으로 롤링됩니다.
+            </p>
             <div class="admin-form">
-                <div>
-                    <label style="display: block; margin-bottom: 10px;">현재 이미지:</label>
-                    <img id="current-image-preview" src="https://via.placeholder.com/300/302b63/ffffff?text=No+Image" 
-                         alt="Current Image" class="image-preview">
-                </div>
-                <div style="margin-top: 20px;">
+                <div style="margin-bottom: 20px;">
                     <input type="file" id="admin-img-input" accept="image/jpeg,image/png,image/jpg" style="margin-bottom: 10px;">
                     <div>
-                        <button class="btn-primary" id="btn-upload-image">이미지 업로드</button>
-                        <button class="btn-danger btn-small" id="btn-remove-image">이미지 삭제</button>
+                        <button class="btn-primary" id="btn-upload-image">이미지 추가</button>
+                        <button class="btn-danger btn-small" id="btn-clear-all-images">전체 삭제</button>
                     </div>
+                </div>
+                <div id="banner-images-list" style="margin-top: 20px;">
+                    <!-- 등록된 이미지 목록이 여기에 표시됨 -->
                 </div>
             </div>
         </div>

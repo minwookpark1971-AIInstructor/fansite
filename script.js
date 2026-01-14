@@ -896,31 +896,161 @@ function updateUserInfo() {
     }
 }
 
-function loadMainImage() {
-    const imgData = backgroundImage.get();
-    const $img = $('#main-hero-img');
+// 배너 슬라이더 관리
+let bannerSlider = {
+    currentIndex: 0,
+    images: [],
+    intervalId: null,
+    autoPlayDelay: 5000, // 5초마다 자동 전환
     
-    if (imgData) {
-        // base64 데이터나 URL인지 확인
-        if (imgData.startsWith('data:') || imgData.startsWith('http://') || imgData.startsWith('https://')) {
-            $img.attr('src', imgData);
-            console.log('메인 이미지 로드됨:', imgData.substring(0, 50) + '...');
-        } else {
-            // 유효하지 않은 형식이면 기본 placeholder 사용
-            $img.attr('src', 'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo');
-            console.log('유효하지 않은 이미지 형식, 기본 이미지 사용');
+    init: function() {
+        this.loadImages();
+        this.render();
+        this.startAutoPlay();
+        this.bindEvents();
+    },
+    
+    loadImages: function() {
+        this.images = bannerImages.get();
+        // 최소 3개 이미지 보장
+        if (this.images.length < 3) {
+            const defaultImages = [
+                'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo+1',
+                'https://via.placeholder.com/1080/667eea/ffffff?text=Cha+Eun-woo+2',
+                'https://via.placeholder.com/1080/f093fb/ffffff?text=Cha+Eun-woo+3'
+            ];
+            // 기본 이미지로 부족한 만큼 채우기
+            while (this.images.length < 3) {
+                this.images.push(defaultImages[this.images.length]);
+            }
         }
-    } else {
-        // 저장된 이미지가 없으면 기본 placeholder 사용
-        $img.attr('src', 'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo');
-        console.log('저장된 메인 이미지가 없습니다. 기본 이미지 사용');
-    }
+    },
     
-    // 이미지 로드 실패 시 fallback
-    $img.on('error', function() {
-        console.error('이미지 로드 실패, 기본 이미지로 대체');
-        $(this).attr('src', 'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo');
-    });
+    render: function() {
+        const $slides = $('#banner-slides');
+        const $dots = $('#banner-dots');
+        
+        $slides.empty();
+        $dots.empty();
+        
+        if (this.images.length === 0) {
+            return;
+        }
+        
+        // 슬라이드 생성
+        this.images.forEach((img, index) => {
+            const slide = $(`
+                <div class="banner-slide ${index === 0 ? 'active' : ''}" data-index="${index}">
+                    <img src="${img}" alt="Banner ${index + 1}" 
+                         onerror="this.onerror=null; this.src='https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo';">
+                </div>
+            `);
+            $slides.append(slide);
+            
+            // 인디케이터 점 생성
+            const dot = $(`
+                <div class="banner-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></div>
+            `);
+            $dots.append(dot);
+        });
+        
+        this.updateActiveSlide();
+    },
+    
+    updateActiveSlide: function() {
+        // 현재 인덱스가 범위를 벗어나면 조정
+        if (this.currentIndex >= this.images.length) {
+            this.currentIndex = 0;
+        }
+        if (this.currentIndex < 0) {
+            this.currentIndex = this.images.length - 1;
+        }
+        
+        // 슬라이드 업데이트
+        $('.banner-slide').removeClass('active');
+        $(`.banner-slide[data-index="${this.currentIndex}"]`).addClass('active');
+        
+        // 인디케이터 업데이트
+        $('.banner-dot').removeClass('active');
+        $(`.banner-dot[data-index="${this.currentIndex}"]`).addClass('active');
+    },
+    
+    next: function() {
+        this.currentIndex = (this.currentIndex + 1) % this.images.length;
+        this.updateActiveSlide();
+        this.resetAutoPlay();
+    },
+    
+    prev: function() {
+        this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+        this.updateActiveSlide();
+        this.resetAutoPlay();
+    },
+    
+    goTo: function(index) {
+        if (index >= 0 && index < this.images.length) {
+            this.currentIndex = index;
+            this.updateActiveSlide();
+            this.resetAutoPlay();
+        }
+    },
+    
+    startAutoPlay: function() {
+        this.stopAutoPlay();
+        this.intervalId = setInterval(() => {
+            this.next();
+        }, this.autoPlayDelay);
+    },
+    
+    stopAutoPlay: function() {
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+    },
+    
+    resetAutoPlay: function() {
+        this.stopAutoPlay();
+        this.startAutoPlay();
+    },
+    
+    bindEvents: function() {
+        // 이전/다음 버튼
+        $('#banner-prev').off('click').on('click', () => {
+            this.prev();
+        });
+        
+        $('#banner-next').off('click').on('click', () => {
+            this.next();
+        });
+        
+        // 인디케이터 점 클릭
+        $(document).off('click', '.banner-dot').on('click', '.banner-dot', (e) => {
+            const index = parseInt($(e.target).data('index'));
+            this.goTo(index);
+        });
+        
+        // 마우스 호버 시 자동 재생 일시정지
+        $('#banner-slider').off('mouseenter mouseleave').on('mouseenter', () => {
+            this.stopAutoPlay();
+        }).on('mouseleave', () => {
+            this.startAutoPlay();
+        });
+    },
+    
+    refresh: function() {
+        this.loadImages();
+        this.render();
+        if (this.currentIndex >= this.images.length) {
+            this.currentIndex = 0;
+        }
+        this.updateActiveSlide();
+    }
+};
+
+// 기존 함수 유지 (하위 호환성)
+function loadMainImage() {
+    bannerSlider.refresh();
 }
 
 function loadSiteLogo() {
@@ -934,15 +1064,7 @@ function loadSiteLogo() {
 
 // 페이지 로드 시 이미지 다시 로드 (이미지 변경 시 반영)
 function refreshMainImage() {
-    const imgData = backgroundImage.get();
-    const $img = $('#main-hero-img');
-    
-    if (imgData && (imgData.startsWith('data:') || imgData.startsWith('http://') || imgData.startsWith('https://'))) {
-        $img.attr('src', imgData);
-    } else {
-        // 유효하지 않거나 없으면 기본 placeholder
-        $img.attr('src', 'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo');
-    }
+    bannerSlider.refresh();
 }
 
 // Storage 이벤트 리스너 추가 (다른 탭에서 변경 시 반영)
@@ -989,7 +1111,8 @@ $(document).ready(() => {
         renderPosts();
         updateAuthUI();
         updateUserInfo();
-        loadMainImage();
+        // 배너 슬라이더 초기화
+        bannerSlider.init();
         loadSiteLogo();
     } catch (error) {
         console.error('Initial render error:', error);
@@ -1011,7 +1134,7 @@ $(document).ready(() => {
     setInterval(() => {
         refreshMainImage();
         loadSiteLogo();
-    }, 1000);
+    }, 2000);
 
     // Navigation Listeners
     $('nav a').on('click', function (e) {
