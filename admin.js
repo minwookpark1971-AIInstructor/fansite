@@ -43,10 +43,269 @@ window.extractYouTubeId = function(urlOrId) {
     return null;
 };
 
-// 초기화
+// 초기화 (admin-dashboard.js가 있으면 중복 실행 방지)
 $(document).ready(() => {
-    console.log('관리자 페이지 초기화 시작');
+    // admin-dashboard.js가 로드되었는지 확인
+    if (typeof initAdminDashboard === 'function') {
+        // admin-dashboard.js가 있으면 콘텐츠 관리 섹션만 초기화
+        console.log('관리자 대시보드 모드로 실행');
+        initContentSection();
+    } else {
+        // 기존 방식으로 실행 (하위 호환성)
+        console.log('관리자 페이지 초기화 시작 (기존 방식)');
+        initLegacyAdmin();
+    }
+});
+
+// 콘텐츠 관리 섹션 초기화
+function initContentSection() {
+    // 데이터 초기화
+    try {
+        initData();
+    } catch (error) {
+        console.error('데이터 초기화 오류:', error);
+    }
     
+    // 콘텐츠 관리 섹션의 기능들만 초기화
+    initContentManagement();
+}
+
+// 콘텐츠 관리 기능 초기화
+function initContentManagement() {
+    // 로고 관리
+    initLogoManagement();
+    
+    // 배너 관리
+    initBannerManagementContent();
+    
+    // 영상 관리
+    initVideoManagement();
+    
+    // 음원 관리
+    initMusicManagement();
+    
+    // 응원 메시지 관리
+    initPostManagement();
+}
+
+// 로고 관리 초기화
+function initLogoManagement() {
+    // 로고 업로드
+    $('#btn-upload-logo').off('click').on('click', function() {
+        const fileInput = $('#admin-logo-input')[0];
+        const file = fileInput.files[0];
+        if (!file) {
+            if (typeof showToast === 'function') {
+                showToast('warning', '알림', '로고 파일을 선택해주세요.');
+            } else {
+                alert('로고 파일을 선택해주세요.');
+            }
+            return;
+        }
+
+        if (!file.type.match('image.*')) {
+            if (typeof showToast === 'function') {
+                showToast('error', '오류', '이미지 파일만 업로드 가능합니다.');
+            } else {
+                alert('이미지 파일만 업로드 가능합니다.');
+            }
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const logoData = e.target.result;
+            store.set('site_logo', logoData);
+            $('#current-logo-preview').attr('src', logoData);
+            if (typeof showToast === 'function') {
+                showToast('success', '업로드 완료', '로고가 업로드되었습니다.');
+            } else {
+                alert('로고가 업로드되었습니다!');
+            }
+            fileInput.value = '';
+        };
+        reader.onerror = function() {
+            if (typeof showToast === 'function') {
+                showToast('error', '오류', '파일 읽기에 실패했습니다.');
+            } else {
+                alert('파일 읽기에 실패했습니다.');
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // 로고 삭제
+    $('#btn-remove-logo').off('click').on('click', function() {
+        if (confirm('로고를 삭제하시겠습니까?')) {
+            store.remove('site_logo');
+            $('#current-logo-preview').attr('src', 'https://via.placeholder.com/200/302b63/ffffff?text=No+Logo');
+            if (typeof showToast === 'function') {
+                showToast('success', '삭제 완료', '로고가 삭제되었습니다.');
+            } else {
+                alert('로고가 삭제되었습니다!');
+            }
+        }
+    });
+
+    // 로고 로드
+    loadCurrentLogo();
+}
+
+// 배너 관리 초기화 (콘텐츠 섹션용)
+function initBannerManagementContent() {
+    // 배너 이미지 추가
+    $('#btn-upload-image').off('click').on('click', function() {
+        const fileInput = $('#admin-img-input')[0];
+        const file = fileInput.files[0];
+        if (!file) {
+            if (typeof showToast === 'function') {
+                showToast('warning', '알림', '이미지 파일을 선택해주세요.');
+            } else {
+                alert('이미지 파일을 선택해주세요.');
+            }
+            return;
+        }
+
+        if (!file.type.match('image.*')) {
+            if (typeof showToast === 'function') {
+                showToast('error', '오류', '이미지 파일만 업로드 가능합니다.');
+            } else {
+                alert('이미지 파일만 업로드 가능합니다.');
+            }
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            if (typeof showToast === 'function') {
+                showToast('error', '오류', '이미지 파일 크기는 5MB 이하여야 합니다.');
+            } else {
+                alert('이미지 파일 크기는 5MB 이하여야 합니다.');
+            }
+            return;
+        }
+
+        const currentImages = bannerImages.get();
+        if (currentImages.length >= 10) {
+            if (typeof showToast === 'function') {
+                showToast('warning', '알림', '최대 10개까지 등록할 수 있습니다.');
+            } else {
+                alert('최대 10개까지 등록할 수 있습니다.');
+            }
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imageData = e.target.result;
+                bannerImages.add(imageData);
+                if (typeof renderBannerImagesList === 'function') {
+                    renderBannerImagesList();
+                }
+                if (typeof showToast === 'function') {
+                    showToast('success', '추가 완료', `이미지가 추가되었습니다! (총 ${bannerImages.get().length}개)`);
+                } else {
+                    alert('이미지가 추가되었습니다!');
+                }
+                fileInput.value = '';
+            } catch (error) {
+                console.error('이미지 업로드 오류:', error);
+                if (typeof showToast === 'function') {
+                    showToast('error', '오류', '이미지 업로드 중 오류가 발생했습니다.');
+                } else {
+                    alert('이미지 업로드 중 오류가 발생했습니다.');
+                }
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // 전체 삭제
+    $('#btn-clear-all-images').off('click').on('click', function() {
+        const images = bannerImages.get();
+        if (images.length === 0) {
+            if (typeof showToast === 'function') {
+                showToast('warning', '알림', '삭제할 이미지가 없습니다.');
+            } else {
+                alert('삭제할 이미지가 없습니다.');
+            }
+            return;
+        }
+        
+        if (confirm(`등록된 모든 이미지(${images.length}개)를 삭제하시겠습니까?`)) {
+            try {
+                bannerImages.set([]);
+                if (typeof renderBannerImagesList === 'function') {
+                    renderBannerImagesList();
+                }
+                if (typeof showToast === 'function') {
+                    showToast('success', '삭제 완료', '모든 이미지가 삭제되었습니다.');
+                } else {
+                    alert('모든 이미지가 삭제되었습니다!');
+                }
+            } catch (error) {
+                console.error('이미지 삭제 오류:', error);
+                if (typeof showToast === 'function') {
+                    showToast('error', '오류', '이미지 삭제 중 오류가 발생했습니다.');
+                } else {
+                    alert('이미지 삭제 중 오류가 발생했습니다.');
+                }
+            }
+        }
+    });
+
+    // 배너 목록 렌더링
+    if (typeof renderBannerImagesList === 'function') {
+        renderBannerImagesList();
+    }
+}
+
+// 영상 관리 초기화
+function initVideoManagement() {
+    // 영상 추가는 기존 코드 사용
+    if (typeof renderVideosTable === 'function') {
+        renderVideosTable();
+    }
+}
+
+// 음원 관리 초기화
+function initMusicManagement() {
+    if (typeof renderMusicTable === 'function') {
+        renderMusicTable();
+    }
+}
+
+// 응원 메시지 관리 초기화
+function initPostManagement() {
+    if (typeof renderPostsTable === 'function') {
+        renderPostsTable();
+    }
+}
+
+// 로고 로드 함수
+function loadCurrentLogo() {
+    try {
+        const logoData = store.get('site_logo');
+        const $preview = $('#current-logo-preview');
+        
+        if (logoData && typeof logoData === 'string' && (logoData.startsWith('data:') || logoData.startsWith('http://') || logoData.startsWith('https://'))) {
+            $preview.attr('src', logoData);
+        } else {
+            $preview.attr('src', 'https://via.placeholder.com/200/302b63/ffffff?text=No+Logo');
+        }
+        
+        $preview.off('error').on('error', function() {
+            $(this).off('error');
+            $(this).attr('src', 'https://via.placeholder.com/200/302b63/ffffff?text=No+Logo');
+        });
+    } catch (error) {
+        console.error('loadCurrentLogo error:', error);
+        $('#current-logo-preview').attr('src', 'https://via.placeholder.com/200/302b63/ffffff?text=No+Logo');
+    }
+}
+
+// 기존 방식 초기화 (하위 호환성)
+function initLegacyAdmin() {
     // 데이터 초기화
     try {
         initData();

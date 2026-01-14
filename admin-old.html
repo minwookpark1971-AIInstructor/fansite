@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지 | Antigravity</title>
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-header {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+        }
+        .admin-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(to right, var(--accent-pink), var(--accent-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+        .back-link:hover {
+            color: var(--accent-pink);
+        }
+        .image-preview {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 2px solid var(--accent-blue);
+        }
+        .btn-small {
+            padding: 5px 15px;
+            font-size: 0.85rem;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Stars Background -->
+    <div id="stars-container"></div>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1><i class="fas fa-cog"></i> 관리자 페이지</h1>
+            <p>메인 페이지 콘텐츠를 관리할 수 있습니다.</p>
+            <div style="margin-top: 20px;">
+                <button class="btn-primary" id="btn-save-all" style="margin-right: 10px;">
+                    <i class="fas fa-save"></i> 모든 변경사항 저장 및 반영
+                </button>
+                <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> 메인 페이지로 돌아가기</a>
+            </div>
+        </div>
+
+        <!-- 로고 관리 -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-image"></i> 로고 관리</h2>
+            <div class="admin-form">
+                <div>
+                    <label style="display: block; margin-bottom: 10px;">현재 로고:</label>
+                    <img id="current-logo-preview" src="https://via.placeholder.com/200/302b63/ffffff?text=No+Logo" 
+                         alt="Current Logo" class="image-preview" style="max-width: 200px;">
+                </div>
+                <div style="margin-top: 20px;">
+                    <input type="file" id="admin-logo-input" accept="image/jpeg,image/png,image/jpg,image/svg+xml" style="margin-bottom: 10px;">
+                    <div>
+                        <button class="btn-primary" id="btn-upload-logo">로고 업로드</button>
+                        <button class="btn-danger btn-small" id="btn-remove-logo">로고 삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 배너 이미지 관리 (슬라이더용) -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-images"></i> 메인 배너 이미지 관리 (슬라이더)</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">
+                최소 3개 이상 등록하시면 등록된 이미지만 표시됩니다. 3개 미만이면 기본 이미지로 자동 보완됩니다. (최대 10개)
+            </p>
+            <div class="admin-form">
+                <div style="margin-bottom: 20px;">
+                    <input type="file" id="admin-img-input" accept="image/jpeg,image/png,image/jpg" style="margin-bottom: 10px;">
+                    <div>
+                        <button class="btn-primary" id="btn-upload-image">이미지 추가</button>
+                        <button class="btn-danger btn-small" id="btn-clear-all-images">전체 삭제</button>
+                    </div>
+                </div>
+                <div id="banner-images-list" style="margin-top: 20px;">
+                    <!-- 등록된 이미지 목록이 여기에 표시됨 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 영상 관리 -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-video"></i> 영상 관리</h2>
+            <div class="admin-form">
+                <div class="admin-form-row">
+                    <input type="text" id="admin-video-url" placeholder="YouTube URL (예: https://www.youtube.com/watch?v=jYdbP455js0)" style="flex: 2;">
+                    <input type="text" id="admin-video-title" placeholder="영상 제목" style="flex: 1;">
+                    <button class="btn-primary" id="btn-add-video">영상 추가</button>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">
+                    YouTube URL 또는 YouTube ID를 입력하세요.
+                </p>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>제목</th>
+                        <th>YouTube ID</th>
+                        <th>미리보기</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="video-table-body">
+                    <!-- Videos will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 음원 관리 -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-music"></i> 음원 관리</h2>
+            <div class="admin-form">
+                <div class="admin-form-row">
+                    <input type="text" id="admin-music-title" placeholder="곡 제목">
+                    <input type="file" id="admin-music-file" accept="audio/*" style="flex: 1;">
+                    <button class="btn-primary" id="btn-add-music">음원 추가</button>
+                </div>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>곡 제목</th>
+                        <th>파일명</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="music-table-body">
+                    <!-- Music will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 쇼핑몰 상품 관리 -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-shopping-bag"></i> 쇼핑몰 상품 관리</h2>
+            <div class="admin-form">
+                <div class="admin-form-row">
+                    <input type="text" id="admin-product-name" placeholder="상품명" style="flex: 1;">
+                    <input type="number" id="admin-product-price" placeholder="가격 (원)" style="flex: 1;">
+                    <select id="admin-product-category" style="flex: 1;">
+                        <option value="포토카드">포토카드</option>
+                        <option value="의류">의류</option>
+                        <option value="음반">음반</option>
+                        <option value="액세서리">액세서리</option>
+                        <option value="포스터">포스터</option>
+                    </select>
+                </div>
+                <div class="admin-form-row">
+                    <input type="number" id="admin-product-stock" placeholder="재고 수량" style="flex: 1;">
+                    <input type="number" id="admin-product-rating" placeholder="평점 (0-5)" step="0.1" min="0" max="5" style="flex: 1;">
+                    <input type="number" id="admin-product-reviews" placeholder="리뷰 수" style="flex: 1;">
+                </div>
+                <textarea id="admin-product-description" placeholder="상품 설명" rows="3" style="width: 100%; margin-top: 10px;"></textarea>
+                <div style="margin-top: 15px;">
+                    <label style="display: block; margin-bottom: 10px;">상품 이미지:</label>
+                    <input type="file" id="admin-product-image" accept="image/jpeg,image/png,image/jpg" style="margin-bottom: 10px;">
+                    <div id="admin-product-image-preview" style="margin-top: 10px;"></div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn-primary" id="btn-add-product">상품 추가</button>
+                    <button class="btn-danger btn-small" id="btn-reset-product-form">폼 초기화</button>
+                </div>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>이미지</th>
+                        <th>상품명</th>
+                        <th>카테고리</th>
+                        <th>가격</th>
+                        <th>재고</th>
+                        <th>평점</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="product-table-body">
+                    <!-- Products will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 회원 관리 -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-users"></i> 회원 관리</h2>
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="admin-user-search" placeholder="이메일 또는 닉네임으로 검색..." 
+                       style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 10px; color: white;">
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>닉네임</th>
+                        <th>이메일</th>
+                        <th>국가</th>
+                        <th>가입일</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body">
+                    <!-- Users will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 결제 로그 관리 -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-receipt"></i> 결제 로그 관리</h2>
+            <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+                <input type="text" id="admin-order-search" placeholder="주문번호 또는 이메일로 검색..." 
+                       style="flex: 1; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 10px; color: white;">
+                <select id="admin-order-status-filter" style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 10px; color: white;">
+                    <option value="all">전체 상태</option>
+                    <option value="PAID">결제 완료</option>
+                    <option value="PENDING">결제 대기</option>
+                    <option value="CANCELLED">취소됨</option>
+                </select>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>주문번호</th>
+                        <th>구매자</th>
+                        <th>상품</th>
+                        <th>결제금액</th>
+                        <th>상태</th>
+                        <th>결제일</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="order-table-body">
+                    <!-- Orders will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 응원 메시지 관리 -->
+        <div class="admin-section glass-card">
+            <h2><i class="fas fa-comments"></i> 응원 메시지 관리</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>작성자</th>
+                        <th>내용</th>
+                        <th>좋아요</th>
+                        <th>댓글 수</th>
+                        <th>작성일</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="post-table-body">
+                    <!-- Posts will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="utils.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
+
