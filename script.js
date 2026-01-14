@@ -8,7 +8,14 @@ const $navUl = $('nav ul');
 let currentUser = auth.getCurrentUser();
 
 // Navigation Logic
+let isNavigating = false; // 무한 루프 방지 플래그
+
 function navigateTo(targetId) {
+    // 이미 네비게이션 중이면 무시
+    if (isNavigating) return;
+    
+    isNavigating = true;
+    
     $sections.removeClass('active');
     $navLinks.removeClass('active');
 
@@ -17,6 +24,23 @@ function navigateTo(targetId) {
 
     // Mobile Menu Close
     $navUl.removeClass('show');
+
+    // URL 해시 업데이트 (GitHub Pages 호환)
+    const currentHash = window.location.hash.substring(1);
+    if (targetId === 'home') {
+        if (currentHash !== '') {
+            // 해시가 없을 때도 처리하기 위해 history API 사용
+            if (window.history && window.history.pushState) {
+                window.history.pushState(null, null, window.location.pathname);
+            } else {
+                window.location.hash = '';
+            }
+        }
+    } else {
+        if (currentHash !== targetId) {
+            window.location.hash = targetId;
+        }
+    }
 
     // 섹션별 렌더링
     if (targetId === 'shop') {
@@ -30,6 +54,11 @@ function navigateTo(targetId) {
     }
 
     window.scrollTo(0, 0);
+    
+    // 플래그 리셋 (약간의 지연을 두어 hashchange 이벤트가 처리되도록)
+    setTimeout(() => {
+        isNavigating = false;
+    }, 100);
 }
 
 // Render Functions
@@ -869,12 +898,29 @@ function updateUserInfo() {
 
 function loadMainImage() {
     const imgData = backgroundImage.get();
+    const $img = $('#main-hero-img');
+    
     if (imgData) {
-        $('#main-hero-img').attr('src', imgData);
-        console.log('메인 이미지 로드됨:', imgData.substring(0, 50) + '...');
+        // base64 데이터나 URL인지 확인
+        if (imgData.startsWith('data:') || imgData.startsWith('http://') || imgData.startsWith('https://')) {
+            $img.attr('src', imgData);
+            console.log('메인 이미지 로드됨:', imgData.substring(0, 50) + '...');
+        } else {
+            // 유효하지 않은 형식이면 기본 placeholder 사용
+            $img.attr('src', 'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo');
+            console.log('유효하지 않은 이미지 형식, 기본 이미지 사용');
+        }
     } else {
-        console.log('저장된 메인 이미지가 없습니다.');
+        // 저장된 이미지가 없으면 기본 placeholder 사용
+        $img.attr('src', 'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo');
+        console.log('저장된 메인 이미지가 없습니다. 기본 이미지 사용');
     }
+    
+    // 이미지 로드 실패 시 fallback
+    $img.on('error', function() {
+        console.error('이미지 로드 실패, 기본 이미지로 대체');
+        $(this).attr('src', 'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo');
+    });
 }
 
 function loadSiteLogo() {
@@ -889,8 +935,13 @@ function loadSiteLogo() {
 // 페이지 로드 시 이미지 다시 로드 (이미지 변경 시 반영)
 function refreshMainImage() {
     const imgData = backgroundImage.get();
-    if (imgData) {
-        $('#main-hero-img').attr('src', imgData);
+    const $img = $('#main-hero-img');
+    
+    if (imgData && (imgData.startsWith('data:') || imgData.startsWith('http://') || imgData.startsWith('https://'))) {
+        $img.attr('src', imgData);
+    } else {
+        // 유효하지 않거나 없으면 기본 placeholder
+        $img.attr('src', 'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo');
     }
 }
 
@@ -965,11 +1016,43 @@ $(document).ready(() => {
     // Navigation Listeners
     $('nav a').on('click', function (e) {
         e.preventDefault();
+        e.stopPropagation();
         const target = $(this).data('target');
         if (target) {
             navigateTo(target);
         }
     });
+    
+    // 해시 변경 감지 (브라우저 뒤로가기/앞으로가기 지원)
+    $(window).on('hashchange', function() {
+        if (isNavigating) return; // navigateTo에서 호출한 경우 무시
+        
+        const hash = window.location.hash.substring(1); // # 제거
+        if (hash) {
+            const targetSection = $('#' + hash);
+            if (targetSection.length > 0) {
+                isNavigating = true;
+                navigateTo(hash);
+            }
+        } else {
+            // 해시가 없으면 홈으로
+            isNavigating = true;
+            navigateTo('home');
+        }
+    });
+    
+    // 페이지 로드 시 해시 확인
+    const initialHash = window.location.hash.substring(1);
+    if (initialHash) {
+        const targetSection = $('#' + initialHash);
+        if (targetSection.length > 0) {
+            navigateTo(initialHash);
+        } else {
+            navigateTo('home');
+        }
+    } else {
+        navigateTo('home');
+    }
 
     $('.hamburger').on('click', () => {
         $navUl.toggleClass('show');
