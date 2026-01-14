@@ -73,14 +73,68 @@
             </div>
             <h1 class="hero-title">CHA EUN-WOO</h1>
             <p class="hero-subtitle">Welcome to Antigravity. Experience the universe of Cha Eun-woo.</p>
+            
+            <!-- 최신 소식 섹션 -->
+            <div class="news-section">
+                <h2 class="section-title"><i class="fas fa-newspaper"></i> 최신 소식</h2>
+                <div class="news-grid" id="news-grid">
+                    <!-- 최신 소식이 여기에 동적으로 추가됨 -->
+                </div>
+            </div>
         </section>
+        
+        <!-- Footer -->
+        <footer class="site-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Antigravity</h3>
+                    <p>차은우 공식 팬사이트</p>
+                </div>
+                <div class="footer-section">
+                    <h4>빠른 링크</h4>
+                    <ul>
+                        <li><a href="#" data-target="home">홈</a></li>
+                        <li><a href="#" data-target="videos">영상 보기</a></li>
+                        <li><a href="#" data-target="music">음원 듣기</a></li>
+                        <li><a href="#" data-target="shop">쇼핑몰</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>SNS</h4>
+                    <div class="social-links">
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>문의하기</h4>
+                    <p>이메일: contact@antigravity.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Antigravity. All rights reserved.</p>
+            </div>
+        </footer>
 
         <!-- Videos Section -->
         <section id="videos">
             <h2><i class="fas fa-video"></i> 차은우 영상 보기</h2>
             <br>
+            <!-- 영상 카테고리 필터 -->
+            <div class="video-filter" id="video-filter">
+                <button class="filter-btn active" data-category="all">전체</button>
+                <button class="filter-btn" data-category="music-video">뮤직비디오</button>
+                <button class="filter-btn" data-category="drama">드라마</button>
+                <button class="filter-btn" data-category="variety">예능</button>
+                <button class="filter-btn" data-category="interview">인터뷰</button>
+            </div>
             <div class="video-grid" id="video-list">
                 <!-- JS will render videos here -->
+            </div>
+            <div class="load-more-container" id="video-load-more" style="display: none;">
+                <button class="btn-primary" id="btn-load-more-videos">더보기</button>
             </div>
         </section>
 
@@ -88,6 +142,31 @@
         <section id="music">
             <h2><i class="fas fa-music"></i> 차은우 음원 듣기</h2>
             <br>
+            <!-- 음원 플레이어 바 -->
+            <div class="music-player-bar glass-card" id="music-player-bar" style="display: none;">
+                <div class="player-info">
+                    <div class="player-album-cover" id="player-album-cover">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="player-track-info">
+                        <div class="player-track-title" id="player-track-title">재생 중인 곡이 없습니다</div>
+                        <div class="player-progress-container">
+                            <span class="player-time" id="player-current-time">0:00</span>
+                            <input type="range" class="player-progress" id="player-progress" min="0" max="100" value="0">
+                            <span class="player-time" id="player-duration">0:00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <button class="player-btn" id="btn-prev-track" aria-label="이전 곡"><i class="fas fa-step-backward"></i></button>
+                    <button class="player-btn player-play-pause" id="btn-play-pause" aria-label="재생/일시정지"><i class="fas fa-play"></i></button>
+                    <button class="player-btn" id="btn-next-track" aria-label="다음 곡"><i class="fas fa-step-forward"></i></button>
+                    <div class="player-volume">
+                        <i class="fas fa-volume-up" id="volume-icon"></i>
+                        <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="100">
+                    </div>
+                </div>
+            </div>
             <div class="glass-card">
                 <div class="music-list" id="music-list">
                     <!-- JS will render music items here -->
@@ -120,12 +199,24 @@
             <div class="community-container">
                 <div id="write-area" class="glass-card write-post-box" style="display:none;">
                     <h3>응원 메시지 작성</h3>
-                    <textarea id="post-content" rows="3" placeholder="차은우에게 응원 메시지를 남겨주세요..."></textarea>
-                    <button class="btn-primary" id="btn-post">작성하기</button>
+                    <textarea id="post-content" rows="3" placeholder="차은우에게 응원 메시지를 남겨주세요... (최대 200자)" maxlength="200"></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <span class="char-count" id="char-count">0 / 200</span>
+                        <button class="btn-primary" id="btn-post">작성하기</button>
+                    </div>
                 </div>
-                <div id="login-prompt" class="glass-card" style="text-align:center;">
-                    <p>메시지를 작성하려면 <a href="#" onclick="navigateTo('login'); return false;"
-                            style="color:var(--accent-pink)">로그인</a>이 필요합니다.</p>
+                <div id="login-prompt" class="glass-card login-prompt-enhanced" style="text-align:center;">
+                    <i class="fas fa-lock" style="font-size: 2rem; color: var(--accent-pink); margin-bottom: 10px;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 10px;">메시지를 작성하려면 로그인이 필요합니다</p>
+                    <a href="#" onclick="navigateTo('login'); return false;" style="color:var(--accent-pink); font-weight: 600; text-decoration: underline;">로그인하러 가기</a>
+                </div>
+                
+                <!-- 정렬 및 필터 -->
+                <div class="post-controls glass-card">
+                    <div class="sort-controls">
+                        <button class="sort-btn active" data-sort="latest">최신순</button>
+                        <button class="sort-btn" data-sort="popular">인기순</button>
+                    </div>
                 </div>
 
                 <div id="post-list">
@@ -138,9 +229,37 @@
         <section id="login">
             <div class="auth-container glass-card" id="login-form">
                 <h2>로그인</h2>
-                <input type="email" id="login-email" placeholder="이메일 주소">
-                <input type="password" id="login-password" placeholder="비밀번호">
+                <div class="input-wrapper">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="login-email" placeholder="이메일 주소" aria-label="이메일">
+                </div>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="login-password" placeholder="비밀번호" aria-label="비밀번호">
+                    <button type="button" class="password-toggle" id="login-password-toggle" aria-label="비밀번호 표시/숨김">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <label class="remember-me">
+                    <input type="checkbox" id="login-remember">
+                    <span>로그인 상태 유지</span>
+                </label>
                 <button class="btn-primary" id="btn-login">로그인</button>
+                <p class="auth-link"><a href="#" onclick="alert('비밀번호 찾기 기능은 준비 중입니다.'); return false;">비밀번호 찾기</a></p>
+                <div class="social-login">
+                    <p style="margin: 20px 0 10px; color: var(--text-muted);">또는</p>
+                    <div class="social-buttons">
+                        <button class="social-btn google" aria-label="Google로 로그인">
+                            <i class="fab fa-google"></i> Google
+                        </button>
+                        <button class="social-btn kakao" aria-label="Kakao로 로그인">
+                            <i class="fas fa-comment"></i> Kakao
+                        </button>
+                        <button class="social-btn naver" aria-label="Naver로 로그인">
+                            <i class="fas fa-n"></i> Naver
+                        </button>
+                    </div>
+                </div>
                 <p class="auth-toggle" onclick="toggleAuth('signup')">계정이 없으신가요? 회원가입</p>
             </div>
         </section>
@@ -149,16 +268,43 @@
         <section id="signup">
             <div class="auth-container glass-card" id="signup-form">
                 <h2>회원가입</h2>
-                <input type="text" id="signup-nickname" placeholder="닉네임">
-                <input type="email" id="signup-email" placeholder="이메일 주소">
-                <input type="password" id="signup-password" placeholder="비밀번호">
-                <select id="signup-country">
+                <div class="input-wrapper">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="signup-nickname" placeholder="닉네임" aria-label="닉네임">
+                </div>
+                <div class="input-wrapper">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="signup-email" placeholder="이메일 주소" aria-label="이메일">
+                    <button type="button" class="btn-check" id="btn-check-email">중복확인</button>
+                </div>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="signup-password" placeholder="비밀번호" aria-label="비밀번호">
+                    <button type="button" class="password-toggle" id="signup-password-toggle" aria-label="비밀번호 표시/숨김">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="password-strength" id="password-strength">
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strength-fill"></div>
+                    </div>
+                    <span class="strength-text" id="strength-text">비밀번호를 입력하세요</span>
+                </div>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="signup-password-confirm" placeholder="비밀번호 확인" aria-label="비밀번호 확인">
+                </div>
+                <select id="signup-country" aria-label="국가">
                     <option value="KR">대한민국</option>
                     <option value="US">미국</option>
                     <option value="JP">일본</option>
                     <option value="CN">중국</option>
                     <option value="Other">기타</option>
                 </select>
+                <label class="terms-checkbox">
+                    <input type="checkbox" id="signup-terms">
+                    <span>이용약관 및 개인정보처리방침에 동의합니다</span>
+                </label>
                 <button class="btn-primary" id="btn-signup">회원가입</button>
                 <p class="auth-toggle" onclick="toggleAuth('login')">이미 회원이신가요? 로그인</p>
             </div>
@@ -256,8 +402,37 @@
         </section>
     </main>
 
+    <!-- 로딩 스피너 -->
+    <div id="loading-spinner" class="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- 상품 상세 모달 -->
+    <div id="product-modal" class="modal" style="display: none;">
+        <div class="modal-content product-modal-content">
+            <span class="modal-close" id="product-modal-close">&times;</span>
+            <div id="product-modal-body">
+                <!-- 상품 상세 내용이 여기에 동적으로 추가됨 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 영상 모달 플레이어 -->
+    <div id="video-modal" class="modal" style="display: none;">
+        <div class="modal-content video-modal-content">
+            <span class="modal-close" id="video-modal-close">&times;</span>
+            <div id="video-modal-body">
+                <!-- 영상 플레이어가 여기에 동적으로 추가됨 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast 알림 -->
+    <div id="toast-container" class="toast-container"></div>
+
     <!-- Scripts -->
     <script src="utils.js"></script>
     <script src="script.js"></script>
+    <script src="enhancements.js"></script>
 </body>
 </html>

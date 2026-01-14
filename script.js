@@ -62,27 +62,62 @@ function navigateTo(targetId) {
 }
 
 // Render Functions
-function renderVideos() {
+let currentVideoFilter = 'all';
+let videoDisplayCount = 6;
+
+function renderVideos(filter = 'all') {
     const videos = store.get('videos', []);
     if (videos.length === 0) {
         $('#video-list').html('<p style="grid-column: 1/-1; text-align:center; color:#ccc;">아직 영상이 없습니다. 관리자 패널에서 추가해주세요!</p>');
         return;
     }
-    const html = videos.map(v => `
-        <div class="video-item glass-card">
-            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius:8px;">
-                <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
-                        src="https://www.youtube.com/embed/${v.id}" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                </iframe>
+    
+    let filteredVideos = videos;
+    if (filter !== 'all') {
+        filteredVideos = videos.filter(v => v.category === filter);
+    }
+    
+    const displayedVideos = filteredVideos.slice(0, videoDisplayCount);
+    const html = displayedVideos.map(v => `
+        <div class="video-item glass-card" data-video-id="${v.id}">
+            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius:8px; cursor: pointer;" onclick="openVideoModal('${v.id}')">
+                <img src="https://img.youtube.com/vi/${v.id}/maxresdefault.jpg" alt="${v.title}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/640x360/302b63/ffffff?text=Video'">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-play" style="color: white; font-size: 1.5rem;"></i>
+                </div>
             </div>
             <div class="video-title">${v.title}</div>
         </div>
     `).join('');
     $('#video-list').html(html);
+    
+    if (filteredVideos.length > videoDisplayCount) {
+        $('#video-load-more').show();
+    } else {
+        $('#video-load-more').hide();
+    }
 }
+
+// 영상 모달 열기
+window.openVideoModal = function(videoId) {
+    const videos = store.get('videos', []);
+    const video = videos.find(v => v.id === videoId);
+    if (!video) return;
+    
+    const modalHtml = `
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+            <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+                    src="https://www.youtube.com/embed/${video.id}?autoplay=1" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+            </iframe>
+        </div>
+        <h3 style="margin-top: 20px;">${video.title}</h3>
+    `;
+    $('#video-modal-body').html(modalHtml);
+    $('#video-modal').fadeIn(300);
+};
 
 function renderMusic() {
     const music = store.get('music', []);
@@ -149,12 +184,16 @@ function renderShop() {
             const inCart = cart.find(item => item.id === product.id || item.id === String(product.id));
             const cartQuantity = inCart ? inCart.quantity : 0;
             const stockStatus = product.stock === 0 ? '품절' : (product.stock < 10 ? `재고 ${product.stock}개` : '');
+            const isNew = product.createdAt && (Date.now() - product.createdAt < 7 * 24 * 60 * 60 * 1000);
+            const isPopular = product.rating && product.rating >= 4.5;
             
             return `
         <div class="product-item glass-card" data-product-id="${product.id}">
-            <div class="product-image-wrapper">
+            <div class="product-image-wrapper" onclick="openProductModal('${product.id}')">
                 <img src="${product.image || 'https://via.placeholder.com/400x400/302b63/ffffff?text=No+Image'}" alt="${product.name || '상품'}" class="product-image" onerror="this.src='https://via.placeholder.com/400x400/302b63/ffffff?text=No+Image'">
                 ${product.stock === 0 ? '<div class="sold-out-badge">품절</div>' : ''}
+                ${isNew ? '<div class="product-badge new">NEW</div>' : ''}
+                ${isPopular ? '<div class="product-badge popular">인기</div>' : ''}
             </div>
             <div class="product-info">
                 <h3 class="product-name">${product.name || '상품명 없음'}</h3>
@@ -691,13 +730,23 @@ window.playMusicByIndex = async function(index) {
     }
 };
 
+let postSortOrder = 'latest';
+
 function renderPosts() {
     const posts = store.get('posts', []);
     if (posts.length === 0) {
         $('#post-list').html('<p style="text-align:center; color:#ccc; padding:20px;">아직 메시지가 없습니다. 첫 번째 메시지를 작성해보세요!</p>');
         return;
     }
-    const html = posts.map(p => {
+    
+    let sortedPosts = [...posts];
+    if (postSortOrder === 'popular') {
+        sortedPosts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    } else {
+        sortedPosts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    }
+    
+    const html = sortedPosts.map(p => {
         const isGold = p.likes >= 100;
         const date = p.timestamp ? new Date(p.timestamp).toLocaleDateString() : 'Just now';
 
