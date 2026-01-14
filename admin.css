@@ -86,6 +86,15 @@
     margin-left: 0;
 }
 
+/* 섹션 콘텐츠 스타일 */
+.admin-section-content {
+    display: none;
+}
+
+.admin-section-content.active {
+    display: block;
+}
+
 .admin-topbar {
     display: flex;
     justify-content: space-between;

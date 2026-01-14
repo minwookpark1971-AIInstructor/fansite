@@ -1721,7 +1721,7 @@ function initMusicManagementStandalone() {
                 showToast('error', '오류', '음원 저장 중 오류가 발생했습니다.');
             }
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsDataURL(file);
     });
     
     renderMusicTableStandalone();
@@ -1757,15 +1757,24 @@ function renderMusicTableStandalone() {
 // 음원 재생 (Standalone)
 window.playMusicStandalone = async function(musicId) {
     try {
-        const audioData = await audioDB.get(musicId);
-        if (!audioData) {
+        const audioFile = await audioDB.get(musicId);
+        if (!audioFile || !audioFile.data) {
             showToast('error', '오류', '음원 파일을 찾을 수 없습니다.');
             return;
         }
         
-        const blob = new Blob([audioData], { type: 'audio/mpeg' });
-        const url = URL.createObjectURL(blob);
+        // audioFile.data는 base64 문자열 또는 ArrayBuffer일 수 있음
+        let blob;
+        if (typeof audioFile.data === 'string') {
+            // base64 문자열인 경우
+            const response = await fetch(audioFile.data);
+            blob = await response.blob();
+        } else {
+            // ArrayBuffer인 경우
+            blob = new Blob([audioFile.data], { type: audioFile.type || 'audio/mpeg' });
+        }
         
+        const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audio.play();
         
