@@ -1205,38 +1205,52 @@ $(document).ready(() => {
     
     // Auth Listeners
     $('#btn-signup').click(() => {
-        const nickname = $('#signup-nickname').val();
-        const email = $('#signup-email').val();
+        const nickname = $('#signup-nickname').val().trim();
+        const email = $('#signup-email').val().trim().toLowerCase(); // 소문자로 변환
         const password = $('#signup-password').val();
         const country = $('#signup-country').val();
         
-
         if (!nickname || !email || !password) {
             alert('모든 필드를 입력해주세요.');
             return;
         }
 
+        // 이메일 형식 검증
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('올바른 이메일 형식이 아닙니다.');
+            return;
+        }
+
         const users = store.get('users', []);
-        if (users.find(u => u.email === email)) {
+        
+        // 이메일 중복 체크 (대소문자 무시)
+        const existingUser = users.find(u => u.email && u.email.toLowerCase() === email);
+        if (existingUser) {
             alert('이미 등록된 이메일입니다.');
+            console.log('중복 이메일:', email, '기존 사용자:', existingUser);
             return;
         }
 
         // 비밀번호는 간단히 저장 (실제로는 해시화해야 함)
-        users.push({ 
+        const newUser = { 
             nickname, 
-            email, 
+            email, // 소문자로 저장
             password, 
             country,
             signupDate: new Date().toISOString()
-        });
+        };
+        
+        users.push(newUser);
         store.set('users', users);
+        console.log('회원가입 완료:', { email, nickname, country });
+        console.log('저장된 사용자 수:', users.length);
         alert('회원가입이 완료되었습니다! 로그인해주세요.');
         toggleAuth('login');
     });
 
     $('#btn-login').click(() => {
-        const email = $('#login-email').val();
+        const email = $('#login-email').val().trim().toLowerCase(); // 소문자로 변환
         const password = $('#login-password').val();
         
         if (!email || !password) {
@@ -1245,7 +1259,14 @@ $(document).ready(() => {
         }
 
         const users = store.get('users', []);
-        const user = users.find(u => u.email === email && u.password === password);
+        console.log('로그인 시도:', { email, usersCount: users.length });
+        console.log('저장된 사용자 목록:', users.map(u => ({ email: u.email, nickname: u.nickname })));
+        
+        // 이메일과 비밀번호 비교 (대소문자 무시)
+        const user = users.find(u => {
+            const userEmail = u.email ? u.email.toLowerCase() : '';
+            return userEmail === email && u.password === password;
+        });
         
         if (user) {
             // 비밀번호는 세션에 저장하지 않음
@@ -1255,8 +1276,14 @@ $(document).ready(() => {
             updateAuthUI();
             updateUserInfo();
             navigateTo('home');
+            console.log('로그인 성공:', currentUser);
             alert('환영합니다, ' + currentUser.nickname + '님!');
         } else {
+            console.error('로그인 실패:', { 
+                입력한이메일: email, 
+                저장된이메일들: users.map(u => u.email),
+                사용자수: users.length 
+            });
             alert('이메일 또는 비밀번호가 올바르지 않습니다.');
         }
     });
