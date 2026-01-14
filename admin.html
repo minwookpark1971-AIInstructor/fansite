@@ -67,6 +67,24 @@
                     </a>
                 </li>
                 <li class="admin-menu-item">
+                    <a href="#videos-admin" class="admin-menu-link" data-section="videos-admin">
+                        <i class="fas fa-video"></i>
+                        <span>영상 등록</span>
+                    </a>
+                </li>
+                <li class="admin-menu-item">
+                    <a href="#music-admin" class="admin-menu-link" data-section="music-admin">
+                        <i class="fas fa-music"></i>
+                        <span>음원 등록</span>
+                    </a>
+                </li>
+                <li class="admin-menu-item">
+                    <a href="#posts-admin" class="admin-menu-link" data-section="posts-admin">
+                        <i class="fas fa-comments"></i>
+                        <span>응원 메시지 관리</span>
+                    </a>
+                </li>
+                <li class="admin-menu-item">
                     <a href="#members" class="admin-menu-link" data-section="members">
                         <i class="fas fa-users"></i>
                         <span>회원 관리</span>
@@ -80,8 +98,8 @@
                 </li>
                 <li class="admin-menu-item">
                     <a href="#content" class="admin-menu-link" data-section="content">
-                        <i class="fas fa-video"></i>
-                        <span>콘텐츠 관리</span>
+                        <i class="fas fa-cog"></i>
+                        <span>콘텐츠 관리 (통합)</span>
                     </a>
                 </li>
             </ul>
@@ -493,6 +511,100 @@
                         <!-- 인기 상품 목록 -->
                     </tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- 영상 등록 섹션 -->
+        <section id="section-videos-admin" class="admin-section-content">
+            <div class="admin-section glass-card">
+                <h2><i class="fas fa-video"></i> 영상 등록</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    YouTube URL을 입력하여 영상을 등록할 수 있습니다.
+                </p>
+                <div class="admin-form">
+                    <div class="admin-form-row">
+                        <input type="text" id="admin-video-url-standalone" placeholder="YouTube URL (예: https://www.youtube.com/watch?v=VIDEO_ID)" style="flex: 2;">
+                        <input type="text" id="admin-video-title-standalone" placeholder="영상 제목" style="flex: 1;">
+                        <button class="btn-primary" id="btn-add-video-standalone">영상 추가</button>
+                    </div>
+                </div>
+                <div class="admin-table-wrapper" style="margin-top: 20px;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>제목</th>
+                                <th>YouTube ID</th>
+                                <th>미리보기</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="video-table-body-standalone"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 음원 등록 섹션 -->
+        <section id="section-music-admin" class="admin-section-content">
+            <div class="admin-section glass-card">
+                <h2><i class="fas fa-music"></i> 음원 등록</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    음원 파일을 업로드하여 등록할 수 있습니다. (MP3, WAV, OGG 형식 지원)
+                </p>
+                <div class="admin-form">
+                    <div class="admin-form-row">
+                        <input type="text" id="admin-music-title-standalone" placeholder="곡 제목" style="flex: 1;">
+                        <input type="file" id="admin-music-file-standalone" accept="audio/*" style="flex: 1;">
+                        <button class="btn-primary" id="btn-add-music-standalone">음원 추가</button>
+                    </div>
+                </div>
+                <div class="admin-table-wrapper" style="margin-top: 20px;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>곡 제목</th>
+                                <th>파일명</th>
+                                <th>재생</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="music-table-body-standalone"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 응원 메시지 관리 섹션 -->
+        <section id="section-posts-admin" class="admin-section-content">
+            <div class="admin-section glass-card">
+                <h2><i class="fas fa-comments"></i> 응원 메시지 관리</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    응원 메시지를 승인하거나 삭제할 수 있습니다.
+                </p>
+                <div class="admin-toolbar" style="margin-bottom: 20px;">
+                    <select class="admin-filter" id="post-status-filter">
+                        <option value="all">전체</option>
+                        <option value="approved">승인됨</option>
+                        <option value="pending">대기중</option>
+                    </select>
+                    <input type="text" class="admin-search" id="post-search" placeholder="작성자 또는 내용으로 검색...">
+                </div>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>작성자</th>
+                                <th>내용</th>
+                                <th>좋아요</th>
+                                <th>댓글 수</th>
+                                <th>작성일</th>
+                                <th>상태</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="post-table-body-standalone"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 

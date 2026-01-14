@@ -52,6 +52,13 @@ const auth = {
     },
     isLoggedIn: () => {
         return auth.getCurrentUser() !== null;
+    },
+    isAdmin: () => {
+        const user = auth.getCurrentUser();
+        if (!user || !user.email) return false;
+        // 관리자 이메일 목록 (필요시 확장 가능)
+        const adminEmails = ['irum.ceo@gmail.com', 'admin@antigravity.com'];
+        return adminEmails.includes(user.email.toLowerCase());
     }
 };
 

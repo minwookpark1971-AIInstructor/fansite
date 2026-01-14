@@ -908,6 +908,49 @@ window.addComment = function (id, btn) {
 };
 
 function updateAuthUI() {
+    // 관리자 메뉴 표시/숨김
+    const isAdmin = auth.isAdmin();
+    if (isAdmin && currentUser) {
+        $('#nav-admin').show();
+        
+        // 관리자 메뉴 클릭 시 해당 관리자 페이지 섹션으로 이동
+        $('#nav-videos').off('click').on('click', function(e) {
+            if (e.ctrlKey || e.metaKey) return; // Ctrl/Cmd 클릭은 새 탭에서 열기
+            e.preventDefault();
+            window.location.href = 'admin.html#videos-admin';
+        });
+        
+        $('#nav-music').off('click').on('click', function(e) {
+            if (e.ctrlKey || e.metaKey) return;
+            e.preventDefault();
+            window.location.href = 'admin.html#music-admin';
+        });
+        
+        $('#nav-community').off('click').on('click', function(e) {
+            if (e.ctrlKey || e.metaKey) return;
+            e.preventDefault();
+            window.location.href = 'admin.html#posts-admin';
+        });
+    } else {
+        $('#nav-admin').hide();
+        
+        // 일반 사용자는 기본 동작
+        $('#nav-videos').off('click').on('click', function(e) {
+            e.preventDefault();
+            navigateTo('videos');
+        });
+        
+        $('#nav-music').off('click').on('click', function(e) {
+            e.preventDefault();
+            navigateTo('music');
+        });
+        
+        $('#nav-community').off('click').on('click', function(e) {
+            e.preventDefault();
+            navigateTo('community');
+        });
+    }
+    
     if (currentUser) {
         $('#nav-auth').hide();
         $('#nav-user').show();

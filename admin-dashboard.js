@@ -23,15 +23,34 @@ $(document).ready(() => {
     initCategoryManagement();
     initReviewManagement();
     initBannerManagement();
+    initVideoManagementStandalone();
+    initMusicManagementStandalone();
+    initPostManagementStandalone();
     initMemberManagement();
     initStatistics();
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
     
-    // 초기 섹션 렌더링 (대시보드만)
-    setTimeout(() => {
-        renderDashboard();
-    }, 100);
+    // URL 해시 확인하여 해당 섹션으로 이동
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+        setTimeout(() => {
+            switchSection(hash);
+        }, 100);
+    } else {
+        // 초기 섹션 렌더링 (대시보드만)
+        setTimeout(() => {
+            renderDashboard();
+        }, 100);
+    }
+    
+    // 해시 변경 감지
+    $(window).on('hashchange', function() {
+        const newHash = window.location.hash.substring(1);
+        if (newHash) {
+            switchSection(newHash);
+        }
+    });
 });
 
 // 관리자 대시보드 초기화
@@ -83,10 +102,22 @@ function switchSection(section) {
     $('.admin-section-content').removeClass('active');
     $(`#section-${section}`).addClass('active');
     
+    // 섹션별 초기화 함수 호출
+    if (section === 'videos-admin') {
+        renderVideosTableStandalone();
+    } else if (section === 'music-admin') {
+        renderMusicTableStandalone();
+    } else if (section === 'posts-admin') {
+        renderPostsTableStandalone();
+    }
+    
     // 페이지 제목 업데이트
     const titles = {
         'dashboard': '대시보드',
         'products': '상품 관리',
+        'videos-admin': '영상 등록',
+        'music-admin': '음원 등록',
+        'posts-admin': '응원 메시지 관리',
         'orders': '주문 관리',
         'categories': '카테고리 관리',
         'reviews': '리뷰/평점 관리',
@@ -1533,3 +1564,342 @@ window.exportOrdersToExcel = function() {
 $('#btn-export-orders').click(() => {
     exportOrdersToExcel();
 });
+
+// ========== 새로운 섹션 초기화 함수들 ==========
+
+// 영상 관리 (Standalone) 초기화
+function initVideoManagementStandalone() {
+    $('#btn-add-video-standalone').off('click').on('click', function() {
+        const urlOrId = $('#admin-video-url-standalone').val().trim();
+        const title = $('#admin-video-title-standalone').val().trim();
+        
+        if (!urlOrId || !title) {
+            showToast('error', '오류', 'YouTube URL과 영상 제목을 모두 입력해주세요.');
+            return;
+        }
+        
+        const videoId = window.extractYouTubeId(urlOrId);
+        if (!videoId) {
+            showToast('error', '오류', '올바른 YouTube URL 형식이 아닙니다.');
+            return;
+        }
+        
+        const videos = store.get('videos', []);
+        if (videos.some(v => v && v.id === videoId)) {
+            showToast('warning', '알림', '이미 등록된 영상입니다.');
+            return;
+        }
+        
+        videos.push({ id: videoId, title: title });
+        store.set('videos', videos);
+        
+        $('#admin-video-url-standalone').val('');
+        $('#admin-video-title-standalone').val('');
+        
+        renderVideosTableStandalone();
+        showToast('success', '추가 완료', '영상이 추가되었습니다.');
+    });
+    
+    renderVideosTableStandalone();
+}
+
+// 영상 테이블 렌더링 (Standalone)
+function renderVideosTableStandalone() {
+    const videos = store.get('videos', []);
+    if (videos.length === 0) {
+        $('#video-table-body-standalone').html('<tr><td colspan="4" style="text-align:center; color:#ccc;">등록된 영상이 없습니다.</td></tr>');
+        return;
+    }
+    
+    const html = videos.map((v, index) => {
+        if (!v || !v.id || !v.title) return '';
+        const title = String(v.title).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const videoId = String(v.id).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        return `
+            <tr>
+                <td>${title}</td>
+                <td>${videoId}</td>
+                <td>
+                    <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" style="color: var(--accent-blue);">
+                        <i class="fas fa-external-link-alt"></i> 미리보기
+                    </a>
+                </td>
+                <td>
+                    <button class="btn-danger btn-small" onclick="deleteVideoStandalone(${index})">삭제</button>
+                    <button class="btn-primary btn-small" onclick="editVideoStandalone(${index})">수정</button>
+                </td>
+            </tr>
+        `;
+    }).filter(html => html !== '').join('');
+    
+    $('#video-table-body-standalone').html(html || '<tr><td colspan="4" style="text-align:center; color:#ccc;">등록된 영상이 없습니다.</td></tr>');
+}
+
+// 영상 삭제 (Standalone)
+window.deleteVideoStandalone = function(index) {
+    if (confirm('이 영상을 삭제하시겠습니까?')) {
+        const videos = store.get('videos', []);
+        videos.splice(index, 1);
+        store.set('videos', videos);
+        renderVideosTableStandalone();
+        showToast('success', '삭제 완료', '영상이 삭제되었습니다.');
+    }
+};
+
+// 영상 수정 (Standalone)
+window.editVideoStandalone = function(index) {
+    const videos = store.get('videos', []);
+    const video = videos[index];
+    if (!video) return;
+    
+    const newUrlOrId = prompt('YouTube URL 또는 ID를 입력하세요:', video.id);
+    if (!newUrlOrId || !newUrlOrId.trim()) return;
+    
+    const newTitle = prompt('영상 제목을 입력하세요:', video.title);
+    if (!newTitle || !newTitle.trim()) return;
+    
+    const videoId = window.extractYouTubeId(newUrlOrId.trim());
+    if (!videoId) {
+        showToast('error', '오류', '올바른 YouTube URL 형식이 아닙니다.');
+        return;
+    }
+    
+    if (videos.some((v, i) => i !== index && v && v.id === videoId)) {
+        showToast('warning', '알림', '이미 등록된 영상입니다.');
+        return;
+    }
+    
+    videos[index] = { id: videoId, title: newTitle.trim() };
+    store.set('videos', videos);
+    renderVideosTableStandalone();
+    showToast('success', '수정 완료', '영상 정보가 수정되었습니다.');
+};
+
+// 음원 관리 (Standalone) 초기화
+function initMusicManagementStandalone() {
+    $('#btn-add-music-standalone').off('click').on('click', function() {
+        const title = $('#admin-music-title-standalone').val().trim();
+        const fileInput = $('#admin-music-file-standalone')[0];
+        const file = fileInput.files[0];
+        
+        if (!title || !file) {
+            showToast('error', '오류', '곡 제목과 음원 파일을 모두 입력해주세요.');
+            return;
+        }
+        
+        if (!file.type.match('audio.*')) {
+            showToast('error', '오류', '음원 파일만 업로드 가능합니다.');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const music = store.get('music', []);
+                const musicId = Date.now().toString();
+                
+                // IndexedDB에 저장
+                await audioDB.save(musicId, e.target.result);
+                
+                music.push({
+                    id: musicId,
+                    title: title,
+                    filename: file.name,
+                    storedIn: 'indexeddb'
+                });
+                
+                store.set('music', music);
+                
+                $('#admin-music-title-standalone').val('');
+                $('#admin-music-file-standalone').val('');
+                
+                renderMusicTableStandalone();
+                showToast('success', '추가 완료', '음원이 추가되었습니다.');
+            } catch (error) {
+                console.error('음원 저장 오류:', error);
+                showToast('error', '오류', '음원 저장 중 오류가 발생했습니다.');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+    
+    renderMusicTableStandalone();
+}
+
+// 음원 테이블 렌더링 (Standalone)
+function renderMusicTableStandalone() {
+    const music = store.get('music', []);
+    if (music.length === 0) {
+        $('#music-table-body-standalone').html('<tr><td colspan="4" style="text-align:center; color:#ccc;">등록된 음원이 없습니다.</td></tr>');
+        return;
+    }
+    
+    const html = music.map((m, index) => `
+        <tr>
+            <td>${m.title || '-'}</td>
+            <td>${m.filename || 'N/A'}</td>
+            <td>
+                <button class="btn-primary btn-small" onclick="playMusicStandalone('${m.id}')">
+                    <i class="fas fa-play"></i> 재생
+                </button>
+            </td>
+            <td>
+                <button class="btn-danger btn-small" onclick="deleteMusicStandalone(${index})">삭제</button>
+                <button class="btn-primary btn-small" onclick="editMusicStandalone(${index})">수정</button>
+            </td>
+        </tr>
+    `).join('');
+    
+    $('#music-table-body-standalone').html(html);
+}
+
+// 음원 재생 (Standalone)
+window.playMusicStandalone = async function(musicId) {
+    try {
+        const audioData = await audioDB.get(musicId);
+        if (!audioData) {
+            showToast('error', '오류', '음원 파일을 찾을 수 없습니다.');
+            return;
+        }
+        
+        const blob = new Blob([audioData], { type: 'audio/mpeg' });
+        const url = URL.createObjectURL(blob);
+        
+        const audio = new Audio(url);
+        audio.play();
+        
+        audio.onended = () => URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('음원 재생 오류:', error);
+        showToast('error', '오류', '음원 재생 중 오류가 발생했습니다.');
+    }
+};
+
+// 음원 삭제 (Standalone)
+window.deleteMusicStandalone = async function(index) {
+    if (confirm('이 음원을 삭제하시겠습니까?')) {
+        const music = store.get('music', []);
+        const musicItem = music[index];
+        
+        try {
+            if (musicItem.storedIn === 'indexeddb' || musicItem.url?.startsWith('indexeddb://')) {
+                await audioDB.delete(musicItem.id);
+            }
+            
+            music.splice(index, 1);
+            store.set('music', music);
+            renderMusicTableStandalone();
+            showToast('success', '삭제 완료', '음원이 삭제되었습니다.');
+        } catch (error) {
+            console.error('음원 삭제 오류:', error);
+            showToast('error', '오류', '음원 삭제 중 오류가 발생했습니다.');
+        }
+    }
+};
+
+// 음원 수정 (Standalone)
+window.editMusicStandalone = function(index) {
+    const music = store.get('music', []);
+    const musicItem = music[index];
+    
+    const newTitle = prompt('곡 제목을 입력하세요:', musicItem.title);
+    if (!newTitle || !newTitle.trim()) return;
+    
+    music[index].title = newTitle.trim();
+    store.set('music', music);
+    renderMusicTableStandalone();
+    showToast('success', '수정 완료', '음원 정보가 수정되었습니다.');
+};
+
+// 응원 메시지 관리 (Standalone) 초기화
+function initPostManagementStandalone() {
+    $('#post-status-filter').off('change').on('change', function() {
+        renderPostsTableStandalone();
+    });
+    
+    $('#post-search').off('input').on('input', function() {
+        renderPostsTableStandalone();
+    });
+    
+    renderPostsTableStandalone();
+}
+
+// 응원 메시지 테이블 렌더링 (Standalone)
+function renderPostsTableStandalone() {
+    const posts = store.get('posts', []);
+    const statusFilter = $('#post-status-filter').val();
+    const searchQuery = $('#post-search').val().toLowerCase();
+    
+    let filteredPosts = posts;
+    
+    // 상태 필터
+    if (statusFilter === 'approved') {
+        filteredPosts = filteredPosts.filter(p => p.approved !== false);
+    } else if (statusFilter === 'pending') {
+        filteredPosts = filteredPosts.filter(p => p.approved === false || p.approved === undefined);
+    }
+    
+    // 검색 필터
+    if (searchQuery) {
+        filteredPosts = filteredPosts.filter(p => 
+            (p.author && p.author.toLowerCase().includes(searchQuery)) ||
+            (p.content && p.content.toLowerCase().includes(searchQuery))
+        );
+    }
+    
+    if (filteredPosts.length === 0) {
+        $('#post-table-body-standalone').html('<tr><td colspan="7" style="text-align:center; color:#ccc;">등록된 메시지가 없습니다.</td></tr>');
+        return;
+    }
+    
+    const html = filteredPosts.map((p, index) => {
+        const originalIndex = posts.indexOf(p);
+        const date = p.timestamp ? new Date(p.timestamp).toLocaleDateString('ko-KR') : 'N/A';
+        const contentPreview = p.content && p.content.length > 50 ? p.content.substring(0, 50) + '...' : (p.content || '');
+        const isApproved = p.approved !== false;
+        
+        return `
+            <tr>
+                <td>${p.author || '-'}</td>
+                <td>${contentPreview}</td>
+                <td>${p.likes || 0}</td>
+                <td>${p.comments ? p.comments.length : 0}</td>
+                <td>${date}</td>
+                <td>
+                    <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; ${isApproved ? 'background: rgba(76, 175, 80, 0.2); color: #4CAF50;' : 'background: rgba(255, 152, 0, 0.2); color: #FF9800;'}">
+                        ${isApproved ? '승인됨' : '대기중'}
+                    </span>
+                </td>
+                <td>
+                    ${!isApproved ? `<button class="btn-primary btn-small" onclick="approvePostStandalone(${originalIndex})">승인</button>` : ''}
+                    <button class="btn-danger btn-small" onclick="deletePostStandalone(${originalIndex})">삭제</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    $('#post-table-body-standalone').html(html);
+}
+
+// 응원 메시지 승인 (Standalone)
+window.approvePostStandalone = function(index) {
+    const posts = store.get('posts', []);
+    if (posts[index]) {
+        posts[index].approved = true;
+        store.set('posts', posts);
+        renderPostsTableStandalone();
+        showToast('success', '승인 완료', '응원 메시지가 승인되었습니다.');
+    }
+};
+
+// 응원 메시지 삭제 (Standalone)
+window.deletePostStandalone = function(index) {
+    if (confirm('이 응원 메시지를 삭제하시겠습니까?')) {
+        const posts = store.get('posts', []);
+        posts.splice(index, 1);
+        store.set('posts', posts);
+        renderPostsTableStandalone();
+        showToast('success', '삭제 완료', '응원 메시지가 삭제되었습니다.');
+    }
+};

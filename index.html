@@ -28,10 +28,10 @@
         <nav>
             <ul>
                 <li><a href="#" data-target="home" class="active">Home</a></li>
-                <li><a href="#" data-target="videos">차은우 영상 보기</a></li>
-                <li><a href="#" data-target="music">차은우 음원 듣기</a></li>
+                <li><a href="#" data-target="videos" id="nav-videos">차은우 영상 보기</a></li>
+                <li><a href="#" data-target="music" id="nav-music">차은우 음원 듣기</a></li>
                 <li><a href="#" data-target="shop">쇼핑몰</a></li>
-                <li><a href="#" data-target="community">응원 메시지</a></li>
+                <li><a href="#" data-target="community" id="nav-community">응원 메시지</a></li>
                 <li id="nav-auth">
                     <a href="#" data-target="login">로그인</a>
                     <span style="margin: 0 5px; color: var(--text-muted);">|</span>
@@ -46,6 +46,12 @@
                     <a href="#" id="btn-logout">로그아웃</a>
                     <span style="margin: 0 5px; color: var(--text-muted);">|</span>
                     <a href="#" data-target="mypage">마이페이지</a>
+                </li>
+                <li id="nav-admin" style="display:none;">
+                    <span style="margin: 0 5px; color: var(--text-muted);">|</span>
+                    <a href="admin.html" style="color: var(--accent-pink); font-weight: 600;">
+                        <i class="fas fa-cog"></i> 관리자
+                    </a>
                 </li>
             </ul>
         </nav>
