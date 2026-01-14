@@ -404,6 +404,84 @@
     color: var(--accent-pink);
 }
 
+/* 상품 모달 폼 스타일 */
+#product-modal .admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#product-modal .admin-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+#product-modal .admin-form input[type="text"],
+#product-modal .admin-form input[type="number"],
+#product-modal .admin-form textarea,
+#product-modal .admin-form select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+#product-modal .admin-form input[type="text"]:focus,
+#product-modal .admin-form input[type="number"]:focus,
+#product-modal .admin-form textarea:focus,
+#product-modal .admin-form select:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.1);
+}
+
+#product-modal .admin-form textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+#product-modal #image-upload-area {
+    border: 2px dashed var(--glass-border);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+#product-modal #image-upload-area:hover {
+    border-color: var(--accent-blue);
+    background: rgba(100, 181, 246, 0.05);
+}
+
+#product-modal #image-upload-area.dragover {
+    border-color: var(--accent-pink);
+    background: rgba(255, 154, 158, 0.1);
+}
+
+#product-modal #modal-product-image-preview {
+    margin-top: 15px;
+    text-align: center;
+}
+
+#product-modal #modal-product-image-preview img {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 10px;
+    border: 2px solid var(--glass-border);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
 /* Toast 알림 */
 .admin-toast-container {
     position: fixed;

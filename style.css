@@ -100,7 +100,7 @@ header {
     -webkit-text-fill-color: transparent;
     cursor: pointer;
     letter-spacing: 2px;
-    display: none; /* 기본 로고 ?�스?�는 ?��? */
+    display: none; /* 기본 로고 텍스트는 숨김 */
 }
 
 nav ul {
@@ -212,7 +212,7 @@ section.active {
     background-color: #000;
 }
 
-/* 배너 ?�라?�더 ?��???*/
+/* 배너 슬라이더 스타일 */
 .banner-slider {
     position: relative;
     width: 100%;
@@ -721,7 +721,7 @@ textarea::placeholder {
     }
 }
 
-/* ?�핑�??��???*/
+/* 쇼핑몰 스타일 */
 .shop-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -926,7 +926,7 @@ textarea::placeholder {
     text-align: center;
 }
 
-/* ?�바구니 ?��???*/
+/* 장바구니 스타일 */
 .cart-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -1050,7 +1050,7 @@ textarea::placeholder {
     color: var(--accent-pink);
 }
 
-/* 결제 ?�이지 ?��???*/
+/* 결제 페이지 스타일 */
 .payment-container {
     max-width: 800px;
     margin: 0 auto;
@@ -1084,7 +1084,7 @@ textarea::placeholder {
     margin-top: 20px;
 }
 
-/* 반응???�자??- ?�핑�?*/
+/* 반응형 디자인 - 쇼핑몰 */
 @media (max-width: 768px) {
     .product-grid {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -1115,8 +1115,7 @@ textarea::placeholder {
     }
 }
 
-
-/* 최신 ?�식 ?�션 */
+/* 최신 소식 섹션 */
 .news-section {
     margin-top: 60px;
     width: 100%;
@@ -1169,7 +1168,7 @@ textarea::placeholder {
     line-height: 1.5;
 }
 
-/* ?�터 */
+/* 푸터 */
 .site-footer {
     background: rgba(15, 12, 41, 0.9);
     backdrop-filter: blur(10px);
@@ -1250,7 +1249,7 @@ textarea::placeholder {
     font-size: 0.9rem;
 }
 
-/* ?�상 ?�터 */
+/* 영상 필터 */
 .video-filter {
     display: flex;
     gap: 10px;
@@ -1282,7 +1281,7 @@ textarea::placeholder {
     margin-top: 30px;
 }
 
-/* ?�원 ?�레?�어 �?*/
+/* 음원 플레이어 바 */
 .music-player-bar {
     position: sticky;
     top: 80px;
@@ -1422,7 +1421,7 @@ textarea::placeholder {
     cursor: pointer;
 }
 
-/* ?�원 메시지 개선 */
+/* 응원 메시지 개선 */
 .login-prompt-enhanced {
     padding: 40px 20px;
 }
@@ -1459,7 +1458,7 @@ textarea::placeholder {
     color: var(--text-muted);
 }
 
-/* 로그???�원가??개선 */
+/* 로그인/회원가입 개선 */
 .input-wrapper {
     position: relative;
     margin-bottom: 15px;
@@ -1525,7 +1524,7 @@ textarea::placeholder {
     cursor: pointer;
 }
 
-.remember-me input[type= checkbox] {
+.remember-me input[type="checkbox"] {
     width: auto;
     margin: 0;
 }
@@ -1637,7 +1636,7 @@ textarea::placeholder {
     cursor: pointer;
 }
 
-.terms-checkbox input[type=checkbox] {
+.terms-checkbox input[type="checkbox"] {
     width: auto;
     margin: 0;
 }
@@ -1704,7 +1703,7 @@ textarea::placeholder {
     }
 }
 
-/* 로딩 ?�피??*/
+/* 로딩 스피너 */
 .loading-spinner {
     position: fixed;
     top: 0;
@@ -1734,7 +1733,7 @@ textarea::placeholder {
     }
 }
 
-/* Toast ?�림 */
+/* Toast 알림 */
 .toast-container {
     position: fixed;
     top: 100px;
@@ -1782,7 +1781,7 @@ textarea::placeholder {
     }
 }
 
-/* ?�품 ?��?지 ?�버 ?�과 개선 */
+/* 상품 이미지 호버 효과 개선 */
 .product-image-wrapper {
     cursor: pointer;
 }
@@ -1803,7 +1802,7 @@ textarea::placeholder {
     background: rgba(0, 0, 0, 0.3);
 }
 
-/* ?�품 배�? */
+/* 상품 배지 */
 .product-badge {
     position: absolute;
     top: 10px;
@@ -1825,13 +1824,13 @@ textarea::placeholder {
     color: white;
 }
 
-/* ?�크�????�비게이??배경 변�?*/
+/* 스크롤 시 네비게이션 배경 변경 */
 header.scrolled {
     background: rgba(15, 12, 41, 0.95);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* ?�근??개선 */
+/* 접근성 개선 */
 .skip-link {
     position: absolute;
     top: -40px;
@@ -1847,7 +1846,7 @@ header.scrolled {
     top: 0;
 }
 
-/* 반응??개선 */
+/* 반응형 개선 */
 @media (max-width: 1024px) {
     .news-grid {
         grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));

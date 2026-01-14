@@ -606,41 +606,66 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="admin-form">
-                <input type="text" id="modal-product-name" placeholder="상품명" required>
-                <textarea id="modal-product-description" placeholder="상품 설명" rows="3" required></textarea>
-                <div class="admin-form-row">
-                    <input type="number" id="modal-product-price" placeholder="가격 (원)" required>
-                    <select id="modal-product-category" required>
-                        <option value="">카테고리 선택</option>
-                    </select>
-                </div>
-                <div class="admin-form-row">
-                    <input type="number" id="modal-product-stock" placeholder="재고 수량" required>
-                    <input type="number" id="modal-product-rating" placeholder="평점 (0-5)" step="0.1" min="0" max="5">
-                    <input type="number" id="modal-product-reviews" placeholder="리뷰 수">
-                </div>
-                <div style="margin-top: 15px;">
-                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">상품 이미지 업로드:</label>
-                    <div style="border: 2px dashed var(--glass-border); border-radius: 10px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;" id="image-upload-area" onclick="$('#modal-product-image').click();">
+            <div class="admin-form" style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- 이미지 업로드 영역 (상단) -->
+                <div>
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: var(--text-main);">상품 이미지 *</label>
+                    <div style="border: 2px dashed var(--glass-border); border-radius: 10px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(255, 255, 255, 0.02);" id="image-upload-area" onclick="$('#modal-product-image').click();">
                         <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--accent-blue); margin-bottom: 10px;"></i>
-                        <p style="margin: 10px 0; color: var(--text-muted);">클릭하여 이미지 파일 선택</p>
+                        <p style="margin: 10px 0; color: var(--text-muted);">클릭하거나 드래그하여 이미지 업로드</p>
                         <p style="font-size: 0.85rem; color: var(--text-muted);">JPG, PNG 파일만 가능 (최대 5MB)</p>
                     </div>
                     <input type="file" id="modal-product-image" accept="image/jpeg,image/png,image/jpg" style="display: none;">
                     <div id="modal-product-image-preview" style="margin-top: 15px; text-align: center;"></div>
                 </div>
-                <div style="margin-top: 15px; display: flex; align-items: center; gap: 10px;">
-                    <label>판매 상태:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="modal-product-status" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span id="modal-product-status-text">판매중</span>
+                
+                <!-- 기본 정보 -->
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">상품명 *</label>
+                        <input type="text" id="modal-product-name" placeholder="상품명을 입력하세요" required style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: var(--text-main);">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">상품 설명 *</label>
+                        <textarea id="modal-product-description" placeholder="상품 설명을 입력하세요" rows="3" required style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: var(--text-main); resize: vertical;"></textarea>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">가격 (원) *</label>
+                            <input type="number" id="modal-product-price" placeholder="0" required style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: var(--text-main);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">카테고리 *</label>
+                            <select id="modal-product-category" required style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: var(--text-main);">
+                                <option value="">카테고리 선택</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">재고 수량 *</label>
+                            <input type="number" id="modal-product-stock" placeholder="0" required min="0" style="width: 100%; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: var(--text-main);">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">판매 상태</label>
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(255, 255, 255, 0.05);">
+                                <label class="toggle-switch" style="margin: 0;">
+                                    <input type="checkbox" id="modal-product-status" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span id="modal-product-status-text" style="color: var(--text-main);">판매중</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button class="btn-primary" id="btn-save-product" style="flex: 1;">저장</button>
-                    <button class="btn-danger" onclick="closeModal('product-modal')" style="flex: 1;">취소</button>
+                
+                <!-- 저장 버튼 -->
+                <div style="display: flex; gap: 10px; margin-top: 10px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+                    <button class="btn-primary" id="btn-save-product" style="flex: 1; padding: 12px; font-size: 1rem;">저장</button>
+                    <button class="btn-danger" onclick="closeModal('product-modal')" style="flex: 1; padding: 12px; font-size: 1rem;">취소</button>
                 </div>
             </div>
         </div>

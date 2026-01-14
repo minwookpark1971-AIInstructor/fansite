@@ -434,25 +434,30 @@ function initProductManagement() {
     const imageUploadArea = $('#image-upload-area');
     imageUploadArea.on('dragover', function(e) {
         e.preventDefault();
-        $(this).css('border-color', 'var(--accent-pink)');
-        $(this).css('background', 'rgba(255, 154, 158, 0.1)');
+        e.stopPropagation();
+        $(this).addClass('dragover');
     });
     
     imageUploadArea.on('dragleave', function(e) {
         e.preventDefault();
-        $(this).css('border-color', 'var(--glass-border)');
-        $(this).css('background', 'transparent');
+        e.stopPropagation();
+        $(this).removeClass('dragover');
     });
     
     imageUploadArea.on('drop', function(e) {
         e.preventDefault();
-        $(this).css('border-color', 'var(--glass-border)');
-        $(this).css('background', 'transparent');
+        e.stopPropagation();
+        $(this).removeClass('dragover');
         
         const files = e.originalEvent.dataTransfer.files;
         if (files.length > 0) {
             const file = files[0];
             if (file.type.match('image.*')) {
+                // 파일 크기 검증
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('error', '오류', '이미지 파일 크기는 5MB 이하여야 합니다.');
+                    return;
+                }
                 $('#modal-product-image')[0].files = files;
                 $('#modal-product-image').trigger('change');
             } else {
@@ -474,8 +479,6 @@ function resetProductModal() {
     $('#modal-product-price').val('');
     $('#modal-product-category').val('');
     $('#modal-product-stock').val('');
-    $('#modal-product-rating').val('');
-    $('#modal-product-reviews').val('');
     $('#modal-product-image').val('');
     $('#modal-product-image-preview').html('');
     $('#modal-product-status').prop('checked', true);
@@ -495,20 +498,25 @@ function saveProductFromModal() {
     const price = parseInt($('#modal-product-price').val());
     const category = $('#modal-product-category').val();
     const stock = parseInt($('#modal-product-stock').val()) || 0;
-    const rating = parseFloat($('#modal-product-rating').val()) || null;
-    const reviews = parseInt($('#modal-product-reviews').val()) || 0;
     const status = $('#modal-product-status').prop('checked');
     const fileInput = $('#modal-product-image')[0];
     const file = fileInput.files[0];
+    const editingProductId = $('#product-modal-title').data('editing-id');
     
-    if (!name || !description || !price || !category) {
-        showToast('error', '오류', '필수 항목을 모두 입력해주세요.');
+    // 필수 항목 검증
+    if (!name || !description || !price || !category || stock < 0) {
+        showToast('error', '오류', '필수 항목을 모두 올바르게 입력해주세요.');
+        return;
+    }
+    
+    // 새 상품 추가 시 이미지 필수
+    if (!editingProductId && !file) {
+        showToast('error', '오류', '상품 이미지를 업로드해주세요.');
         return;
     }
     
     const processImage = (imageData) => {
         const products = store.get('products', []);
-        const editingProductId = $('#product-modal-title').data('editing-id');
         
         if (editingProductId) {
             // 수정 모드
@@ -521,9 +529,7 @@ function saveProductFromModal() {
                     price,
                     category,
                     stock: status ? stock : 0,
-                    image: imageData || products[productIndex].image,
-                    rating,
-                    reviews
+                    image: imageData || products[productIndex].image
                 };
             }
         } else {
@@ -537,8 +543,6 @@ function saveProductFromModal() {
                 image: imageData || 'https://via.placeholder.com/400x400/302b63/ffffff?text=No+Image',
                 category,
                 stock: status ? stock : 0,
-                rating,
-                reviews,
                 createdAt: new Date().toISOString()
             });
         }
@@ -550,12 +554,22 @@ function saveProductFromModal() {
     };
     
     if (file) {
+        // 파일 크기 검증 (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('error', '오류', '이미지 파일 크기는 5MB 이하여야 합니다.');
+            return;
+        }
+        
         const reader = new FileReader();
         reader.onload = function(e) {
             processImage(e.target.result);
         };
+        reader.onerror = function() {
+            showToast('error', '오류', '이미지 파일을 읽는 중 오류가 발생했습니다.');
+        };
         reader.readAsDataURL(file);
     } else {
+        // 수정 모드에서는 기존 이미지 유지
         processImage(null);
     }
 }
@@ -580,8 +594,6 @@ window.editProduct = function(productId) {
     $('#modal-product-description').val(product.description || '');
     $('#modal-product-price').val(product.price || '');
     $('#modal-product-stock').val(product.stock || 0);
-    $('#modal-product-rating').val(product.rating || '');
-    $('#modal-product-reviews').val(product.reviews || 0);
     $('#modal-product-status').prop('checked', product.stock > 0);
     $('#modal-product-status-text').text(product.stock > 0 ? '판매중' : '품절');
     
