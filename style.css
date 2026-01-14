@@ -227,20 +227,22 @@ section.active {
     position: relative;
     width: 100%;
     height: 100%;
-    display: flex;
-    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .banner-slide {
-    min-width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     height: 100%;
-    position: relative;
     opacity: 0;
     transition: opacity 0.8s ease-in-out;
+    z-index: 1;
 }
 
 .banner-slide.active {
     opacity: 1;
+    z-index: 2;
 }
 
 .banner-slide img {

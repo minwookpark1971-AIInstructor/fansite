@@ -912,18 +912,27 @@ let bannerSlider = {
     
     loadImages: function() {
         this.images = bannerImages.get();
-        // 최소 3개 이미지 보장
-        if (this.images.length < 3) {
+        // 등록된 이미지가 없거나 3개 미만일 때만 기본 이미지 추가
+        if (this.images.length === 0) {
+            // 이미지가 하나도 없으면 기본 이미지 3개 사용
+            this.images = [
+                'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo+1',
+                'https://via.placeholder.com/1080/667eea/ffffff?text=Cha+Eun-woo+2',
+                'https://via.placeholder.com/1080/f093fb/ffffff?text=Cha+Eun-woo+3'
+            ];
+        } else if (this.images.length < 3) {
+            // 등록된 이미지가 1-2개면 기본 이미지로 3개까지 채우기
             const defaultImages = [
                 'https://via.placeholder.com/1080/302b63/ffffff?text=Cha+Eun-woo+1',
                 'https://via.placeholder.com/1080/667eea/ffffff?text=Cha+Eun-woo+2',
                 'https://via.placeholder.com/1080/f093fb/ffffff?text=Cha+Eun-woo+3'
             ];
-            // 기본 이미지로 부족한 만큼 채우기
             while (this.images.length < 3) {
                 this.images.push(defaultImages[this.images.length]);
             }
         }
+        // 3개 이상이면 등록된 이미지만 사용
+        console.log('배너 이미지 로드:', this.images.length + '개');
     },
     
     render: function() {
@@ -934,10 +943,13 @@ let bannerSlider = {
         $dots.empty();
         
         if (this.images.length === 0) {
+            console.warn('배너 이미지가 없습니다.');
             return;
         }
         
-        // 슬라이드 생성
+        console.log('배너 슬라이더 렌더링:', this.images.length + '개 이미지');
+        
+        // 슬라이드 생성 (모든 이미지 표시)
         this.images.forEach((img, index) => {
             const slide = $(`
                 <div class="banner-slide ${index === 0 ? 'active' : ''}" data-index="${index}">
@@ -953,6 +965,11 @@ let bannerSlider = {
             `);
             $dots.append(dot);
         });
+        
+        // 현재 인덱스가 범위를 벗어나면 조정
+        if (this.currentIndex >= this.images.length) {
+            this.currentIndex = 0;
+        }
         
         this.updateActiveSlide();
     },

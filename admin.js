@@ -191,14 +191,39 @@ $(document).ready(() => {
         }
     });
 
+    // YouTube URL에서 ID 추출 함수
+    function extractYouTubeId(urlOrId) {
+        if (!urlOrId) return null;
+        
+        // 이미 ID 형식인 경우 (11자리 영숫자)
+        if (/^[a-zA-Z0-9_-]{11}$/.test(urlOrId)) {
+            return urlOrId;
+        }
+        
+        // URL 형식인 경우 ID 추출
+        const patterns = [
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+            /^([a-zA-Z0-9_-]{11})$/
+        ];
+        
+        for (const pattern of patterns) {
+            const match = urlOrId.match(pattern);
+            if (match && match[1]) {
+                return match[1];
+            }
+        }
+        
+        return null;
+    }
+
     // 영상 추가
     $('#btn-add-video').click(() => {
         try {
-            const videoId = $('#admin-video-id').val().trim();
+            const videoUrlOrId = $('#admin-video-url').val().trim();
             const videoTitle = $('#admin-video-title').val().trim();
 
-            if (!videoId) {
-                alert('YouTube ID를 입력해주세요.');
+            if (!videoUrlOrId) {
+                alert('YouTube URL 또는 ID를 입력해주세요.');
                 return;
             }
 
@@ -207,9 +232,11 @@ $(document).ready(() => {
                 return;
             }
 
-            // YouTube ID 유효성 검사 (11자리 영숫자와 하이픈, 언더스코어만 허용)
-            if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
-                alert('올바른 YouTube ID 형식이 아닙니다. (11자리 영숫자)');
+            // YouTube ID 추출
+            const videoId = extractYouTubeId(videoUrlOrId);
+            
+            if (!videoId) {
+                alert('올바른 YouTube URL 또는 ID 형식이 아닙니다.\n예: https://www.youtube.com/watch?v=jYdbP455js0 또는 jYdbP455js0');
                 return;
             }
 
@@ -225,7 +252,7 @@ $(document).ready(() => {
             
             // 중복 체크
             if (currentVideos.some(v => v && v.id === videoId)) {
-                alert('이미 등록된 YouTube ID입니다.');
+                alert('이미 등록된 YouTube 영상입니다.');
                 return;
             }
             
@@ -237,7 +264,7 @@ $(document).ready(() => {
             store.set('videos', currentVideos);
             console.log('영상 추가 완료:', { id: videoId, title: videoTitle });
             
-            $('#admin-video-id').val('');
+            $('#admin-video-url').val('');
             $('#admin-video-title').val('');
             renderVideosTable();
             alert('영상이 추가되었습니다!');
@@ -673,14 +700,28 @@ window.editVideo = function(index) {
     const videos = store.get('videos', []);
     const video = videos[index];
     
-    const newId = prompt('YouTube ID를 입력하세요:', video.id);
-    if (newId === null) return;
+    const newUrlOrId = prompt('YouTube URL 또는 ID를 입력하세요:', video.id);
+    if (newUrlOrId === null) return;
     
     const newTitle = prompt('영상 제목을 입력하세요:', video.title);
     if (newTitle === null) return;
 
-    if (newId && newTitle) {
-        videos[index] = { id: newId.trim(), title: newTitle.trim() };
+    if (newUrlOrId && newTitle) {
+        // YouTube ID 추출
+        const videoId = extractYouTubeId(newUrlOrId.trim());
+        
+        if (!videoId) {
+            alert('올바른 YouTube URL 또는 ID 형식이 아닙니다.');
+            return;
+        }
+        
+        // 중복 체크 (현재 수정 중인 항목 제외)
+        if (videos.some((v, i) => i !== index && v && v.id === videoId)) {
+            alert('이미 등록된 YouTube 영상입니다.');
+            return;
+        }
+        
+        videos[index] = { id: videoId, title: newTitle.trim() };
         store.set('videos', videos);
         renderVideosTable();
         alert('영상 정보가 수정되었습니다!');

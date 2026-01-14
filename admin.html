@@ -90,7 +90,7 @@
         <div class="admin-section glass-card">
             <h2><i class="fas fa-images"></i> 메인 배너 이미지 관리 (슬라이더)</h2>
             <p style="color: var(--text-muted); margin-bottom: 20px;">
-                최대 10개까지 이미지를 등록할 수 있습니다. 등록된 이미지가 자동으로 롤링됩니다.
+                최소 3개 이상 등록하시면 등록된 이미지만 표시됩니다. 3개 미만이면 기본 이미지로 자동 보완됩니다. (최대 10개)
             </p>
             <div class="admin-form">
                 <div style="margin-bottom: 20px;">
@@ -111,10 +111,13 @@
             <h2><i class="fas fa-video"></i> 영상 관리</h2>
             <div class="admin-form">
                 <div class="admin-form-row">
-                    <input type="text" id="admin-video-id" placeholder="YouTube ID (예: jYdbP455js0)">
-                    <input type="text" id="admin-video-title" placeholder="영상 제목">
+                    <input type="text" id="admin-video-url" placeholder="YouTube URL (예: https://www.youtube.com/watch?v=jYdbP455js0)" style="flex: 2;">
+                    <input type="text" id="admin-video-title" placeholder="영상 제목" style="flex: 1;">
                     <button class="btn-primary" id="btn-add-video">영상 추가</button>
                 </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">
+                    YouTube URL 또는 YouTube ID를 입력하세요.
+                </p>
             </div>
             <table class="admin-table">
                 <thead>
