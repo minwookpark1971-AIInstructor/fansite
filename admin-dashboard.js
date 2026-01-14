@@ -31,24 +31,25 @@ $(document).ready(() => {
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
     
-    // URL 해시 확인하여 해당 섹션으로 이동
-    const hash = window.location.hash.substring(1);
-    if (hash) {
-        setTimeout(() => {
+    // 초기 섹션 설정 (대시보드)
+    setTimeout(() => {
+        // URL 해시 확인하여 해당 섹션으로 이동
+        const hash = window.location.hash.substring(1);
+        if (hash) {
             switchSection(hash);
-        }, 100);
-    } else {
-        // 초기 섹션 렌더링 (대시보드만)
-        setTimeout(() => {
-            renderDashboard();
-        }, 100);
-    }
+        } else {
+            // 기본적으로 대시보드 표시
+            switchSection('dashboard');
+        }
+    }, 100);
     
     // 해시 변경 감지
     $(window).on('hashchange', function() {
         const newHash = window.location.hash.substring(1);
         if (newHash) {
             switchSection(newHash);
+        } else {
+            switchSection('dashboard');
         }
     });
 });

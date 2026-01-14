@@ -36,14 +36,24 @@
     margin: 0;
 }
 
+.admin-sidebar nav {
+    display: block;
+    width: 100%;
+    flex: 1;
+}
+
 .admin-menu {
     list-style: none;
     padding: 0;
     margin: 0;
+    display: block;
+    width: 100%;
 }
 
 .admin-menu-item {
     margin: 5px 0;
+    display: block;
+    list-style: none;
 }
 
 .admin-menu-link {
