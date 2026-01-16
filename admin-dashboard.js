@@ -498,14 +498,44 @@ function initProductManagement() {
         }
     });
 
-    // 판매 상태 토글
+    // 판매 상태 토글 (구버전 호환용 - 신규 모달에서는 사용 안함)
     $('#modal-product-status').change(function () {
         $('#modal-product-status-text').text($(this).prop('checked') ? '판매중' : '품절');
     });
+
+    // ===== 개선된 상품 모달 기능 =====
+
+    // 실시간 검증 및 글자 수 카운터
+    initProductFormValidation();
+
+    // 이미지 업로드 개선
+    initEnhancedImageUpload();
+
+    // 고급 옵션 토글
+    initAdvancedOptions();
+
+    // 임시 저장 기능
+    initDraftSaving();
+
+    // 키보드 단축키
+    initKeyboardShortcuts();
+
+    // 미리보기 기능
+    initProductPreview();
+
+    // 카테고리 추가 버튼
+    initCategoryManagement();
+
+    // 재고 상태 자동 조정
+    initStockStatusSync();
+
+    // 이전 임시 저장 데이터 확인
+    checkAndRestoreDraft();
 }
 
 // 상품 모달 초기화
 function resetProductModal() {
+    // 모든 입력 필드 초기화
     $('#modal-product-name').val('');
     $('#modal-product-description').val('');
     $('#modal-product-price').val('');
@@ -513,14 +543,41 @@ function resetProductModal() {
     $('#modal-product-stock').val('');
     $('#modal-product-image').val('');
     $('#modal-product-image-preview').html('');
+    $('#modal-product-sale-status').val('active');
+    $('#modal-product-tags').val('');
+
+    // 구버전 호환
     $('#modal-product-status').prop('checked', true);
     $('#modal-product-status-text').text('판매중');
-    $('#image-upload-area').show();
 
-    // 카테고리 옵션 업데이트
-    const categories = ['포토카드', '의류', '음반', '액세서리', '포스터'];
-    const html = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-    $('#modal-product-category').html('<option value="">카테고리 선택</option>' + html);
+    // 이미지 업로드 영역 표시
+    $('#image-upload-area').show().removeClass('dragover');
+
+    // 에러 메시지 및 스타일 초기화
+    $('.form-input').removeClass('error success');
+    $('.error-message').removeClass('show').text('');
+    $('#stock-warning').removeClass('show');
+
+    // 글자 수 카운터 초기화
+    $('#name-char-count').text('0');
+    $('#desc-char-count').text('0');
+    $('.char-counter').removeClass('warning error');
+
+    // 편집 ID 제거
+    $('#product-modal-title').removeData('editing-id').text('상품 추가');
+
+    // 필수 배지 표시
+    $('#image-required-badge').text('필수').removeClass('optional-badge').addClass('required-badge');
+
+    // 카테고리 옵션 업데이트 (동적으로 불러오기)
+    loadCategoriesForSelect();
+
+    // 고급 옵션 접기
+    $('#advanced-options-content').removeClass('show');
+    $('#toggle-advanced').removeClass('active');
+
+    // 임시 저장 데이터 삭제
+    clearProductDraft();
 }
 
 // 상품 모달에서 저장
@@ -530,65 +587,99 @@ function saveProductFromModal() {
     const price = parseInt($('#modal-product-price').val());
     const category = $('#modal-product-category').val();
     const stock = parseInt($('#modal-product-stock').val()) || 0;
-    const status = $('#modal-product-status').prop('checked');
+    const saleStatus = $('#modal-product-sale-status').val();
+    const tags = $('#modal-product-tags').val().trim();
     const fileInput = $('#modal-product-image')[0];
     const file = fileInput.files[0];
     const editingProductId = $('#product-modal-title').data('editing-id');
 
-    // 필수 항목 검증
-    if (!name || !description || !price || !category || stock < 0) {
-        showToast('error', '오류', '필수 항목을 모두 올바르게 입력해주세요.');
+    // 전체 폼 검증
+    const validationErrors = validateProductForm(editingProductId);
+    if (validationErrors.length > 0) {
+        // 첫 번째 에러 필드로 스크롤
+        const firstErrorField = validationErrors[0].field;
+        $(`#${firstErrorField}`).focus();
+
+        showToast('error', '입력 오류', validationErrors[0].message);
         return;
     }
 
-    // 새 상품 추가 시 이미지 필수
-    if (!editingProductId && !file) {
-        showToast('error', '오류', '상품 이미지를 업로드해주세요.');
-        return;
-    }
+    // 저장 버튼 로딩 상태
+    const $saveBtn = $('#btn-save-product');
+    const $saveBtnText = $('#save-btn-text');
+    $saveBtn.prop('disabled', true).addClass('loading');
+    $saveBtnText.text('저장 중...');
+
 
     const processImage = (imageData) => {
-        const products = store.get('products', []);
+        try {
+            const products = store.get('products', []);
 
-        if (editingProductId) {
-            // 수정 모드
-            const productIndex = products.findIndex(p => p.id === editingProductId);
-            if (productIndex !== -1) {
-                products[productIndex] = {
-                    ...products[productIndex],
+            if (editingProductId) {
+                // 수정 모드
+                const productIndex = products.findIndex(p => p.id === editingProductId);
+                if (productIndex !== -1) {
+                    products[productIndex] = {
+                        ...products[productIndex],
+                        name,
+                        description,
+                        price,
+                        category,
+                        stock,
+                        saleStatus,
+                        tags: tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [],
+                        image: imageData || products[productIndex].image,
+                        updatedAt: new Date().toISOString()
+                    };
+                }
+            } else {
+                // 추가 모드
+                const newId = Date.now().toString();
+                products.push({
+                    id: newId,
                     name,
                     description,
                     price,
+                    image: imageData || 'https://via.placeholder.com/400x400/302b63/ffffff?text=No+Image',
                     category,
-                    stock: status ? stock : 0,
-                    image: imageData || products[productIndex].image
-                };
+                    stock,
+                    saleStatus,
+                    tags: tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [],
+                    createdAt: new Date().toISOString(),
+                    rating: null,
+                    reviews: 0
+                });
             }
-        } else {
-            // 추가 모드
-            const newId = Date.now().toString();
-            products.push({
-                id: newId,
-                name,
-                description,
-                price,
-                image: imageData || 'https://via.placeholder.com/400x400/302b63/ffffff?text=No+Image',
-                category,
-                stock: status ? stock : 0,
-                createdAt: new Date().toISOString()
-            });
-        }
 
-        store.set('products', products);
-        showToast('success', '저장 완료', editingProductId ? '상품이 수정되었습니다.' : '상품이 추가되었습니다.');
-        closeModal('product-modal');
-        renderProductsTable(currentProductPage);
+            store.set('products', products);
+
+            // 임시 저장 데이터 삭제
+            clearProductDraft();
+
+            showToast('success', '저장 완료', editingProductId ? '상품이 수정되었습니다.' : '상품이 추가되었습니다.');
+
+            // 버튼 복구
+            $saveBtn.prop('disabled', false).removeClass('loading');
+            $saveBtnText.text('저장');
+
+            closeModal('product-modal');
+            renderProductsTable(currentProductPage);
+        } catch (error) {
+            console.error('상품 저장 오류:', error);
+            showToast('error', '저장 실패', '상품 저장 중 오류가 발생했습니다.');
+
+            // 버튼 복구
+            $saveBtn.prop('disabled', false).removeClass('loading');
+            $saveBtnText.text('저장');
+        }
     };
 
     if (file) {
         // 파일 크기 검증 (5MB)
         if (file.size > 5 * 1024 * 1024) {
             showToast('error', '오류', '이미지 파일 크기는 5MB 이하여야 합니다.');
+            $saveBtn.prop('disabled', false).removeClass('loading');
+            $saveBtnText.text('저장');
             return;
         }
 
@@ -598,6 +689,8 @@ function saveProductFromModal() {
         };
         reader.onerror = function () {
             showToast('error', '오류', '이미지 파일을 읽는 중 오류가 발생했습니다.');
+            $saveBtn.prop('disabled', false).removeClass('loading');
+            $saveBtnText.text('저장');
         };
         reader.readAsDataURL(file);
     } else {
